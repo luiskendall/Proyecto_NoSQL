@@ -248,7 +248,93 @@ class VentanaGestionAnuncios:
             self.form_eliminar.master.destroy()
 
         self.interfaz_grafica.cargar_anuncios()
+
+class VentanaSeleccionGrupo:
+
+    def __init__(self, master, callback_seleccionar_grupo):
+        self.master = master
+        self.master.title("Seleccionar Grupo")
+
+        self.master.geometry("400x200")
+
+        widthScreen = root.winfo_screenwidth()
+        heightScreen = root.winfo_screenheight()
+
+        x_pos = (widthScreen - 400) // 2
+        y_pos = (heightScreen - 200) // 2
+        self.master.geometry(f"400x200+{x_pos}+{y_pos}")
+
+        self.label_seleccionar_grupo = ttk.Label(master, text="Selecciona un Grupo:")
+        self.label_seleccionar_grupo.pack(pady=10)
+
+        self.grupos_info = self.get_grupos() 
+
+        self.combo_grupos = ttk.Combobox(master, values=[grupo["nombre"] for grupo in self.grupos_info])
+        self.combo_grupos.pack(pady=10)
+
+        self.btn_seleccionar = ttk.Button(master, text="Seleccionar", command=lambda: [callback_seleccionar_grupo(self.combo_grupos.get(), self.obtener_id_grupo())])
         
+        self.btn_seleccionar.pack(pady=10)
+
+    #Get nombre grupos
+    def get_grupos(self):
+        grupos = gruposColeccion.find({}, {"_id": 0, "nombre": 1, "id_grupo": 1})
+        return list(grupos)
+
+    def obtener_id_grupo(self):
+        # Get id_grupo
+        grupo_seleccionado = self.combo_grupos.get()
+        for grupo in self.grupos_info:
+            if grupo["nombre"] == grupo_seleccionado:
+                return grupo["id_grupo"]
+        return None 
+
+class VentanaGestionAsistencia:
+ 
+ def __init__(self, master, interfaz_grafica, grupo_seleccionado, id_grupo_seleccionado):
+        self.master = master
+        self.interfaz_grafica = interfaz_grafica
+        self.grupo_seleccionado = grupo_seleccionado
+        self.master.title(f"Gestión de Asistencia - Grupo: {grupo_seleccionado}")
+
+        
+        window_width = 1050
+        window_height = 300  
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+        
+
+        self.tree_asistencia = ttk.Treeview(master)
+        self.tree_asistencia['columns'] = (1, 2, 3, 4, 5)
+        self.tree_asistencia.heading("#0", text="ID")
+        self.tree_asistencia.column("#0", width=0, stretch=tk.NO)
+        self.tree_asistencia.heading(1, text="Cédula Estudiante")
+        self.tree_asistencia.heading(2, text="ID Grupo")
+        self.tree_asistencia.heading(3, text="ID Materia")
+        self.tree_asistencia.heading(4, text="Fecha")
+        self.tree_asistencia.heading(5, text="Asistió")
+        self.tree_asistencia.pack()
+
+        for col in (1, 2, 3, 4, 5):
+            self.tree_asistencia.column(col, anchor='center')
+
+        self.tree_asistencia.pack(padx=10, pady=10)
+
+        # Get datos y mostrarlos
+        datos_asistencia = interfaz_grafica.obtener_datos_asistencia(grupo_seleccionado, id_grupo_seleccionado)
+
+        for registro in datos_asistencia:
+            self.tree_asistencia.insert('', 'end', values=(
+                registro['cedula_Est'],
+                registro['id_grupo'],
+                registro['id_materia'],
+                registro['fecha'],
+                registro['asistio']
+            ))
+
 class InterfazGrafica:
 
     def __init__(self, master):
@@ -262,8 +348,16 @@ class InterfazGrafica:
         self.text_anuncios = tk.Text(master, wrap=tk.WORD, height=10, width=60, state=tk.DISABLED)
         self.text_anuncios.pack(padx=10, pady=10)
 
-        self.btn_gestion_anuncios = tk.Button(master, text="Gestionar Anuncios", command=self.abrir_ventana_gestion_anuncios)
-        self.btn_gestion_anuncios.pack(pady=10)
+        self.frame_botones_gestion = tk.Frame(master)
+        self.frame_botones_gestion.pack(pady=10)
+
+        self.btn_gestion_anuncios = tk.Button(self.frame_botones_gestion, text="Gestionar Anuncios", command=self.abrir_ventana_gestion_anuncios)
+        self.btn_gestion_anuncios.pack(side=tk.LEFT, padx=5)
+
+        self.form_seleccion_grupo = None  
+
+        self.btn_gestion_asistencia = tk.Button(self.frame_botones_gestion, text="Gestionar Asistencia", command=self.abrir_ventana_seleccion_grupo)
+        self.btn_gestion_asistencia.pack(side=tk.LEFT, padx=5)
 
         self.cargar_anuncios()
 
@@ -280,7 +374,30 @@ class InterfazGrafica:
             self.text_anuncios.insert(tk.END, contenido_anuncio)
 
         self.text_anuncios.config(state=tk.DISABLED)  
-        self.text_anuncios.config(font=("Arial", 12), fg="black") 
+        self.text_anuncios.config(font=("Arial", 12), fg="black")
+
+    def obtener_datos_asistencia(self, grupo_seleccionado, id_grupo_seleccionado):
+     id_grupo = gruposColeccion.find_one({"nombre": grupo_seleccionado}, {"_id": 0, "id_grupo": 1})
+
+     if id_grupo is not None:
+        asistencia = asistenciaColeccion.find({"id_grupo": id_grupo["id_grupo"]})
+
+        datos_asistencia = []
+
+        for registro in asistencia:
+            datos_registro = {
+                'cedula_Est': registro['cedula_Est'],
+                'id_grupo': registro['id_grupo'],
+                'id_materia': registro['id_materia'],
+                'fecha': registro['fecha'],
+                'asistio': registro['asistio']
+            }
+            datos_asistencia.append(datos_registro)
+
+        return datos_asistencia
+     else:
+        print("No se ha seleccionado un grupo.")
+        return []
 
 
     def abrir_ventana_gestion_anuncios(self):
@@ -290,18 +407,36 @@ class InterfazGrafica:
             self.ventana_gestion_anuncios = tk.Toplevel(self.master)
             app_gestion_anuncios = VentanaGestionAnuncios(self.ventana_gestion_anuncios, self)
 
+    def abrir_ventana_seleccion_grupo(self):
+       if self.form_seleccion_grupo and self.form_seleccion_grupo.master.winfo_exists():
+        self.form_seleccion_grupo.master.lift()
+       else:
+        ventana_seleccion_grupo = tk.Toplevel(self.master)
+        self.form_seleccion_grupo = VentanaSeleccionGrupo(ventana_seleccion_grupo, self.abrir_ventana_gestion_asistencia)
+        ventana_seleccion_grupo.wait_window(ventana_seleccion_grupo)
+
+    def abrir_ventana_gestion_asistencia(self, grupo_seleccionado, id_grupo_seleccionado):
+     if self.form_seleccion_grupo is not None:
+        grupo_seleccionado = self.form_seleccion_grupo.combo_grupos.get()
+        id_grupo_seleccionado = self.form_seleccion_grupo.obtener_id_grupo()
+
+        if grupo_seleccionado and id_grupo_seleccionado:
+            if hasattr(self, 'ventana_gestion_asistencia') and self.ventana_gestion_asistencia.winfo_exists():
+                self.ventana_gestion_asistencia.lift()
+            else:
+                self.ventana_gestion_asistencia = tk.Toplevel(self.master)
+                app_gestion_asistencia = VentanaGestionAsistencia(self.ventana_gestion_asistencia, self, grupo_seleccionado, id_grupo_seleccionado)
 #Main Window
 root = tk.Tk()
 
-#widthScreen = root.winfo_screenwidth()
-#heightScreen = root.winfo_screenheight()
+widthScreen = root.winfo_screenwidth()
+heightScreen = root.winfo_screenheight()
 
-#pos_x = (widthScreen - 1200) // 2
-#pos_y = (heightScreen - 600) // 2
+pos_x = (widthScreen - 1200) // 2
+pos_y = (heightScreen - 600) // 2
 
-root.geometry("1200x600")
+root.geometry("1200x600+{}+{}".format(pos_x, pos_y))
 app = InterfazGrafica(root)
 
 root.mainloop()
 client.close()
-
