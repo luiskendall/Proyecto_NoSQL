@@ -2,6 +2,8 @@ import pymongo
 from pymongo import MongoClient, errors
 import tkinter as tk
 from tkinter import messagebox, ttk
+from datetime import datetime
+
 
 connectionString = "mongodb+srv://admin:admin@proyectog9.etru1b1.mongodb.net/?retryWrites=true&w=majority"
 
@@ -118,6 +120,94 @@ class FormularioEliminarAnuncio:
 
         self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_id_anuncio.get()), master.destroy()])
         self.btn_eliminar.grid(row=1, column=0, columnspan=2, pady=10)
+
+class FormularioAgregarAsistencia:
+
+    def __init__(self, master, callback_agregar_registro):
+        self.master = master
+        self.master.title("Agregar Nuevo Registro")
+
+        window_width = 300 
+        window_height = 300
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        #Datos ComboBox
+        cedulas_estudiantes = self.get_cedulas_estudiantes()
+        nombres_grupos = self.get_nombres_grupos()
+        id_materias = self.get_id_materias()
+
+        self.label_cedula_estudiante = ttk.Label(master, text="Cédula Estudiante:")
+        self.label_cedula_estudiante.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.combo_cedula_estudiante = ttk.Combobox(master, values=cedulas_estudiantes)
+        self.combo_cedula_estudiante.grid(row=0, column=1, padx=10, pady=10)
+
+        self.label_nombre_grupo = ttk.Label(master, text="Nombre del Grupo:")
+        self.label_nombre_grupo.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.combo_nombre_grupo = ttk.Combobox(master, values=nombres_grupos)
+        self.combo_nombre_grupo.grid(row=1, column=1, padx=10, pady=10)
+
+        self.label_id_materia = ttk.Label(master, text="ID Materia:")
+        self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        self.combo_id_materia = ttk.Combobox(master, values=id_materias)
+        self.combo_id_materia.grid(row=2, column=1, padx=10, pady=10)
+
+        self.label_fecha = ttk.Label(master, text="Fecha:")
+        self.label_fecha.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+        
+        self.fecha_var = tk.StringVar()
+        self.entry_fecha = ttk.Entry(master, textvariable=self.fecha_var, state="readonly")
+        self.entry_fecha.grid(row=3, column=1, padx=10, pady=10)
+
+        #Fecha actual
+        fecha_actual = datetime.now().strftime("%Y-%m-%d")
+        self.fecha_var.set(fecha_actual)
+
+        self.label_asistio = ttk.Label(master, text="Asistió:")
+        self.label_asistio.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+
+        self.combo_asistio = ttk.Combobox(master, values=["Sí", "No"])
+        self.combo_asistio.grid(row=4, column=1, padx=10, pady=10)
+
+        self.btn_agregar_registro = ttk.Button(master, text="Agregar Registro", command=lambda: [callback_agregar_registro(), master.destroy()])
+        self.btn_agregar_registro.grid(row=5, column=0, columnspan=2, pady=10)
+    
+    def obtener_id_grupo_por_nombre(self, nombre_grupo):
+        grupo = gruposColeccion.find_one({"nombre": nombre_grupo}, {"_id": 0, "id_grupo": 1})
+        return grupo["id_grupo"] if grupo else None
+
+    def obtener_valor_asistio(self):
+        valor_asistio = True if self.combo_asistio.get().lower() == "sí" else False
+        return valor_asistio
+    
+    def get_nombres_grupos(self):
+        nombres_grupos = gruposColeccion.distinct("nombre")
+        return nombres_grupos
+
+    def get_cedulas_estudiantes(self):
+        cedulas_estudiantes = estudiantesColeccion.distinct("cedula_Est")
+        return cedulas_estudiantes
+
+    def get_id_grupos(self):
+        id_grupos = gruposColeccion.distinct("id_grupo")
+        return id_grupos
+
+    def get_id_materias(self):
+        id_materias = materiasColeccion.distinct("id_materia")
+        return id_materias
+
+    def obtener_valor_fecha(self):
+        fecha_str = self.entry_fecha.get()
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+
+        # Covert to BSON
+        fecha_bson = datetime.combine(fecha, datetime.min.time())
+
+        return fecha_bson
 
 class VentanaGestionAnuncios:
     
@@ -291,11 +381,16 @@ class VentanaSeleccionGrupo:
 
 class VentanaGestionAsistencia:
  
- def __init__(self, master, interfaz_grafica, grupo_seleccionado, id_grupo_seleccionado):
+    def __init__(self, master, interfaz_grafica, grupo_seleccionado, id_grupo_seleccionado):
         self.master = master
         self.interfaz_grafica = interfaz_grafica
         self.grupo_seleccionado = grupo_seleccionado
+        self.id_grupo_seleccionado = id_grupo_seleccionado
         self.master.title(f"Gestión de Asistencia - Grupo: {grupo_seleccionado}")
+
+        self.form_agregar_registro = None
+        self.btn_agregar_registro = ttk.Button(master, text="Agregar Registro", command=self.mostrar_form_agregar_registro)
+        self.btn_agregar_registro.pack(pady=10)
 
         
         window_width = 1050
@@ -334,6 +429,83 @@ class VentanaGestionAsistencia:
                 registro['fecha'],
                 registro['asistio']
             ))
+ 
+    def obtener_id_grupo_por_nombre(self, nombre_grupo):
+        grupo = gruposColeccion.find_one({"nombre": nombre_grupo}, {"_id": 0, "id_grupo": 1})
+        return grupo["id_grupo"] if grupo else None
+
+    def mostrar_form_agregar_registro(self):
+        if self.form_agregar_registro and self.form_agregar_registro.master.winfo_exists():
+            self.form_agregar_registro.master.lift()
+        else:
+            ventana_form_agregar_registro = tk.Toplevel(self.master)
+            self.form_agregar_registro = FormularioAgregarAsistencia(ventana_form_agregar_registro, self.agregar_registro)
+            ventana_form_agregar_registro.wait_window(ventana_form_agregar_registro)
+
+    def actualizar_tabla_asistencia(self):
+        # Obtener datos y mostrarlos
+        datos_asistencia = self.interfaz_grafica.obtener_datos_asistencia(self.grupo_seleccionado, self.id_grupo_seleccionado)
+
+        # Limpiar la tabla antes de agregar los nuevos datos
+        for item in self.tree_asistencia.get_children():
+            self.tree_asistencia.delete(item)
+
+        for registro in datos_asistencia:
+            self.tree_asistencia.insert('', 'end', values=(
+                registro['cedula_Est'],
+                registro['id_grupo'],
+                registro['id_materia'],
+                registro['fecha'],
+                registro['asistio']
+            ))
+        self.master.lift()
+
+    def agregar_registro(self):
+        if self.form_agregar_registro:
+
+            #Datos form
+            cedula_estudiante = self.form_agregar_registro.combo_cedula_estudiante.get()
+            nombre_grupo = self.form_agregar_registro.combo_nombre_grupo.get()
+            id_materia = self.form_agregar_registro.combo_id_materia.get()
+            fecha = self.form_agregar_registro.obtener_valor_fecha()
+            asistio = self.form_agregar_registro.obtener_valor_asistio()
+
+            id_grupo_seleccionado = self.id_grupo_seleccionado if hasattr(self, 'id_grupo_seleccionado') else None
+        
+            # NOT NULL
+            if not cedula_estudiante or not id_grupo_seleccionado or not id_materia or not fecha:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                return
+
+            if not estudiantesColeccion.find_one({"cedula_Est": cedula_estudiante}):
+                messagebox.showwarning("Advertencia", f"No existe un estudiante con la cédula '{cedula_estudiante}'.")
+                return
+            
+            if not gruposColeccion.find_one({"id_grupo": id_grupo_seleccionado}):
+                messagebox.showwarning("Advertencia", f"No existe un grupo con el ID '{id_grupo_seleccionado}'.")
+                return
+
+            if not materiasColeccion.find_one({"id_materia": id_materia}):
+                messagebox.showwarning("Advertencia", f"No existe una materia con el ID '{id_materia}'.")
+                return
+
+            #INSERT Asistencia
+            nuevo_registro = {
+                'cedula_Est': cedula_estudiante,
+                'id_grupo': id_grupo_seleccionado,
+                'id_materia': id_materia,
+                'fecha': fecha,
+                'asistio': asistio
+            }
+
+            asistenciaColeccion.insert_one(nuevo_registro)
+            messagebox.showinfo("Éxito", "Se agregó correctamente el registro de asistencia.")
+
+            self.actualizar_tabla_asistencia()
+
+            if self.form_agregar_registro.master.winfo_exists():
+                self.form_agregar_registro.master.destroy()
+
 
 class InterfazGrafica:
 
@@ -361,7 +533,6 @@ class InterfazGrafica:
 
         self.cargar_anuncios()
 
-    
     def cargar_anuncios(self):
         self.text_anuncios.config(state=tk.NORMAL)  
         self.text_anuncios.delete(1.0, tk.END)
@@ -377,6 +548,7 @@ class InterfazGrafica:
         self.text_anuncios.config(font=("Arial", 12), fg="black")
 
     def obtener_datos_asistencia(self, grupo_seleccionado, id_grupo_seleccionado):
+     #Depende del nombre del grupo, traigo el Id
      id_grupo = gruposColeccion.find_one({"nombre": grupo_seleccionado}, {"_id": 0, "id_grupo": 1})
 
      if id_grupo is not None:
@@ -398,7 +570,6 @@ class InterfazGrafica:
      else:
         print("No se ha seleccionado un grupo.")
         return []
-
 
     def abrir_ventana_gestion_anuncios(self):
         if hasattr(self, 'ventana_gestion_anuncios') and self.ventana_gestion_anuncios.winfo_exists():
@@ -426,6 +597,7 @@ class InterfazGrafica:
             else:
                 self.ventana_gestion_asistencia = tk.Toplevel(self.master)
                 app_gestion_asistencia = VentanaGestionAsistencia(self.ventana_gestion_asistencia, self, grupo_seleccionado, id_grupo_seleccionado)
+
 #Main Window
 root = tk.Tk()
 
