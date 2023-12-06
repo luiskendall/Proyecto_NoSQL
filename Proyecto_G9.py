@@ -390,7 +390,7 @@ class InterfazGrafica:
                 'id_grupo': registro['id_grupo'],
                 'id_materia': registro['id_materia'],
                 'fecha': registro['fecha'],
-                'asistio': registro['asistio']
+                'asistio': "Sí" if registro['asistio'] else "No"
             }
             datos_asistencia.append(datos_registro)
 
