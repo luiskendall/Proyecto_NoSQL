@@ -127,7 +127,7 @@ class FormularioAgregarAsistencia:
         self.master = master
         self.master.title("Agregar Nuevo Registro")
 
-        window_width = 300 
+        window_width = 340 
         window_height = 300
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
@@ -202,12 +202,90 @@ class FormularioAgregarAsistencia:
 
     def obtener_valor_fecha(self):
         fecha_str = self.entry_fecha.get()
+
+        #Fecha sin la hora 
+        fecha_str = fecha_str.split(" ")[0] 
         fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
-
-        # Covert to BSON
         fecha_bson = datetime.combine(fecha, datetime.min.time())
-
         return fecha_bson
+
+class FormularioEditarAsistencia:
+
+    def __init__(self, master, datos_registro, nombre_grupo, id_materia, callback_editar_registro):
+        self.master = master
+        self.master.title("Editar Registro de Asistencia")
+    
+        window_width = 340
+        window_height = 350
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        self.master.grid_columnconfigure(0, weight=1)
+        self.master.grid_columnconfigure(1, weight=1)
+
+        self.label_cedula_estudiante = ttk.Label(master, text="Cédula Estudiante:")
+        self.label_cedula_estudiante.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_cedula_estudiante = ttk.Entry(master)
+        self.entry_cedula_estudiante.grid(row=0, column=1, padx=10, pady=10)
+        self.entry_cedula_estudiante.insert(0, datos_registro['cedula_Est'])
+        self.entry_cedula_estudiante.config(state="readonly")
+
+        self.label_nombre_grupo = ttk.Label(master, text="Nombre del Grupo:")
+        self.label_nombre_grupo.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+
+        self.label_nombre_grupo_valor = ttk.Label(master, text=nombre_grupo)
+        self.label_nombre_grupo_valor.grid(row=1, column=1, padx=10, pady=10)
+
+        self.label_id_materia = ttk.Label(master, text="ID Materia:")
+        self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+
+        self.label_id_materia_valor = ttk.Label(master, text=id_materia)
+        self.label_id_materia_valor.grid(row=2, column=1, padx=10, pady=10)
+
+        self.label_fecha = ttk.Label(master, text="Fecha:")
+        self.label_fecha.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+
+        self.fecha_var = tk.StringVar()
+        self.entry_fecha = ttk.Entry(master, textvariable=self.fecha_var, state="readonly")
+        self.entry_fecha.grid(row=3, column=1, padx=10, pady=10)
+        self.fecha_var.set(datos_registro['fecha'])
+
+        self.label_asistio = ttk.Label(master, text="Asistió:")
+        self.label_asistio.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+
+        self.combo_asistio = ttk.Combobox(master, values=["Sí", "No"])
+        self.combo_asistio.grid(row=4, column=1, padx=10, pady=10)
+        self.combo_asistio.set(datos_registro['asistio'])
+
+        self.button_frame = ttk.Frame(master)
+        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+        self.btn_editar_registro = ttk.Button(self.button_frame, text="Editar Registro", command=lambda: [callback_editar_registro(), master.destroy()])
+        self.btn_editar_registro.grid(row=0, column=0) 
+        self.btn_editar_registro.config(width=15)  
+
+    def obtener_valor_asistio(self):
+        valor_asistio = True if self.combo_asistio.get().lower() == "sí" else False
+        return valor_asistio
+
+    def obtener_valor_fecha(self):
+        fecha_str = self.entry_fecha.get()
+
+        #Fecha sin la hora 
+        fecha_str = fecha_str.split(" ")[0] 
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+        fecha_bson = datetime.combine(fecha, datetime.min.time())
+        return fecha_bson
+    
+    def obtener_nombres_grupos(self):
+        nombres_grupos = gruposColeccion.distinct("nombre")
+        return nombres_grupos
 
 class VentanaGestionAnuncios:
     
@@ -242,20 +320,31 @@ class VentanaGestionAnuncios:
         self.btn_eliminar_anuncio.pack(pady=10)
 
         self.form_agregar = None
+        self.form_editar = None
+        self.form_eliminar = None
 
     def mostrar_form_agregar(self):
-        ventana_form_agregar = tk.Toplevel(self.master)
-        self.form_agregar = FormularioAgregarAnuncio(ventana_form_agregar, self.agregar_anuncio)
-        ventana_form_agregar.wait_window(ventana_form_agregar)
+        if self.form_agregar and self.form_agregar.master.winfo_exists():
+            self.form_agregar.master.lift()
+        else:
+            ventana_form_agregar = tk.Toplevel(self.master)
+            self.form_agregar = FormularioAgregarAnuncio(ventana_form_agregar, self.agregar_anuncio)
+            ventana_form_agregar.wait_window(ventana_form_agregar)
 
     def mostrar_form_editar(self):
-        ventana_form_editar = tk.Toplevel(self.master)
-        self.form_editar = FormularioEditarAnuncio(ventana_form_editar, self.editar_anuncio)
-        ventana_form_editar.wait_window(ventana_form_editar)
+        if self.form_editar and self.form_editar.master.winfo_exists():
+            self.form_editar.master.lift()
+        else:
+            ventana_form_editar = tk.Toplevel(self.master)
+            self.form_editar = FormularioEditarAnuncio(ventana_form_editar, self.editar_anuncio)
+            ventana_form_editar.wait_window(ventana_form_editar)
 
     def mostrar_form_eliminar(self):
-        ventana_form_eliminar = tk.Toplevel(self.master)
-        self.form_eliminar = FormularioEliminarAnuncio(ventana_form_eliminar, self.eliminar_anuncio)
+        if self.form_eliminar and self.form_eliminar.master.winfo_exists():
+            self.form_eliminar.master.lift()
+        else:
+            ventana_form_eliminar = tk.Toplevel(self.master)
+            self.form_eliminar = FormularioEliminarAnuncio(ventana_form_eliminar, self.eliminar_anuncio)
 
     def agregar_anuncio(self):
         if self.form_agregar:
@@ -272,19 +361,20 @@ class VentanaGestionAnuncios:
             #Check Id Anuncio
             if anunciosColeccion.find_one({"id_anuncios": id_anuncio}):
                 messagebox.showwarning("Advertencia", f"El ID del anuncio '{id_anuncio}' ya existe. Por favor, elige otro.")
-                return
+                self.master.deiconify() 
+                self.master.lift() 
+            else:
+                anuncio = {"id_anuncios": id_anuncio, "titulo": titulo, "contenido": contenido}
+                anunciosColeccion.insert_one(anuncio)
+                messagebox.showinfo("Éxito", "Se ingresó correctamente el anuncio.")
 
-            anuncio = {"id_anuncios": id_anuncio,"titulo": titulo, "contenido": contenido}
-            anunciosColeccion.insert_one(anuncio)
-            messagebox.showinfo("Éxito","Se ingresó correctamente el anuncio.")
+                #Cerrar ventana gestión
+                self.master.destroy() 
 
-            #Cerrar ventana gestión
-            self.master.destroy() 
+                if self.form_agregar.master.winfo_exists():
+                    self.form_agregar.master.destroy()
 
-            if self.form_agregar.master.winfo_exists():
-                self.form_agregar.master.destroy()
-
-            self.interfaz_grafica.cargar_anuncios()
+                self.interfaz_grafica.cargar_anuncios()
 
     def editar_anuncio(self):
         if self.form_editar:
@@ -301,19 +391,19 @@ class VentanaGestionAnuncios:
             # IF NOT EXISTS
             if not anunciosColeccion.find_one({"id_anuncios": id_anuncio}):
                 messagebox.showwarning("Advertencia", f"El ID del anuncio '{id_anuncio}' no existe.")
-                return
-            
-            anunciosColeccion.update_one({"id_anuncios": id_anuncio}, {"$set": {"titulo": titulo, "contenido": contenido}})
+                self.master.deiconify() 
+                self.master.lift() 
+            else:
+                anunciosColeccion.update_one({"id_anuncios": id_anuncio}, {"$set": {"titulo": titulo, "contenido": contenido}})
+                messagebox.showinfo("Éxito", "Se modificó correctamente el anuncio.")
 
-            messagebox.showinfo("Éxito", "Se modificó correctamente el anuncio.")
+                #Cerrar ventana gestión
+                self.master.destroy() 
 
-            #Cerrar ventana gestión
-            self.master.destroy() 
+                if self.form_editar.master.winfo_exists():
+                    self.form_editar.master.destroy()
 
-            if self.form_editar.master.winfo_exists():
-                self.form_editar.master.destroy()
-
-            self.interfaz_grafica.cargar_anuncios()
+                self.interfaz_grafica.cargar_anuncios()
 
     def eliminar_anuncio(self, id_anuncio):
         if self.form_eliminar:
@@ -326,18 +416,19 @@ class VentanaGestionAnuncios:
         anuncio = anunciosColeccion.find_one({"id_anuncios": id_anuncio})
         if not anuncio:
             messagebox.showwarning("Advertencia", f"No se encontró el anuncio con el ID '{id_anuncio}'.")
-            return
-        
-        anunciosColeccion.delete_one({"id_anuncios": id_anuncio})
-        messagebox.showinfo("Éxito", f"Se eliminó correctamente el anuncio con el ID '{id_anuncio}'.")
+            self.master.deiconify() 
+            self.master.lift() 
+        else:
+            anunciosColeccion.delete_one({"id_anuncios": id_anuncio})
+            messagebox.showinfo("Éxito", f"Se eliminó correctamente el anuncio con el ID '{id_anuncio}'.")
 
-        #Cerrar ventana gestión
-        self.master.destroy() 
+            #Cerrar ventana gestión
+            self.master.destroy() 
 
-        if self.form_eliminar.master.winfo_exists():
-            self.form_eliminar.master.destroy()
+            if self.form_eliminar.master.winfo_exists():
+                self.form_eliminar.master.destroy()
 
-        self.interfaz_grafica.cargar_anuncios()
+            self.interfaz_grafica.cargar_anuncios()
 
 class VentanaSeleccionGrupo:
 
@@ -380,17 +471,26 @@ class VentanaSeleccionGrupo:
         return None 
 
 class VentanaGestionAsistencia:
- 
     def __init__(self, master, interfaz_grafica, grupo_seleccionado, id_grupo_seleccionado):
         self.master = master
         self.interfaz_grafica = interfaz_grafica
         self.grupo_seleccionado = grupo_seleccionado
         self.id_grupo_seleccionado = id_grupo_seleccionado
         self.master.title(f"Gestión de Asistencia - Grupo: {grupo_seleccionado}")
+        
+        self.btn_frame = ttk.Frame(master)
+        self.btn_frame.pack(pady=10)
 
         self.form_agregar_registro = None
-        self.btn_agregar_registro = ttk.Button(master, text="Agregar Registro", command=self.mostrar_form_agregar_registro)
-        self.btn_agregar_registro.pack(pady=10)
+        self.form_editar_registro = None
+
+        #AGREGAR Asistencia
+        self.btn_agregar_registro = ttk.Button(self.btn_frame, text="Agregar Registro", command=self.mostrar_form_agregar_registro)
+        self.btn_agregar_registro.pack(side=tk.LEFT, padx=5)
+
+        #EDITAR Asistencia
+        self.btn_editar_registro = ttk.Button(self.btn_frame, text="Editar Registro", command=self.mostrar_form_editar_registro)
+        self.btn_editar_registro.pack(side=tk.LEFT, padx=5)
 
         
         window_width = 1050
@@ -429,10 +529,29 @@ class VentanaGestionAsistencia:
                 registro['fecha'],
                 registro['asistio']
             ))
- 
+
+        self.last_selected_item = None
+        self.tree_asistencia.bind('<ButtonRelease-1>', lambda event: self.seleccionar_registro(event))
+        
+    def seleccionar_registro(self, event):
+        #Registro seleccionado
+        selected_item = self.tree_asistencia.selection()
+
+        #Desmarcar si es el mismo registro
+        if selected_item == self.last_selected_item:
+            self.tree_asistencia.selection_remove(selected_item)
+            self.last_selected_item = None
+        else:
+            
+            self.last_selected_item = selected_item
+
     def obtener_id_grupo_por_nombre(self, nombre_grupo):
         grupo = gruposColeccion.find_one({"nombre": nombre_grupo}, {"_id": 0, "id_grupo": 1})
         return grupo["id_grupo"] if grupo else None
+
+    def obtener_nombre_grupo_por_id(self, id_grupo):
+        grupo = gruposColeccion.find_one({"id_grupo": id_grupo}, {"_id": 0, "nombre": 1})
+        return grupo["nombre"] if grupo else None
 
     def mostrar_form_agregar_registro(self):
         if self.form_agregar_registro and self.form_agregar_registro.master.winfo_exists():
@@ -442,8 +561,56 @@ class VentanaGestionAsistencia:
             self.form_agregar_registro = FormularioAgregarAsistencia(ventana_form_agregar_registro, self.agregar_registro)
             ventana_form_agregar_registro.wait_window(ventana_form_agregar_registro)
 
+    def mostrar_form_editar_registro(self):
+        if self.form_editar_registro and self.form_editar_registro.master.winfo_exists():
+            self.form_editar_registro.master.lift()
+        else:
+            selected_item = self.tree_asistencia.selection()
+            if not selected_item:
+                messagebox.showwarning("Advertencia", "Por favor, selecciona un registro de asistencia.")
+                self.actualizar_tabla_asistencia()
+                return
+
+            datos_registro = self.obtener_datos_registro_seleccionado(selected_item)
+            print("Datos del registro seleccionado:", datos_registro)
+
+            #Nombre grupo por id_grupo
+            nombre_grupo = self.obtener_nombre_grupo_por_id(datos_registro['id_grupo'])
+
+            ventana_form_editar_registro = tk.Toplevel(self.master)
+            self.form_editar_registro = FormularioEditarAsistencia(
+            ventana_form_editar_registro,
+            datos_registro,
+            nombre_grupo,
+            datos_registro['id_materia'],
+            self.editar_registro
+            )
+            ventana_form_editar_registro.wait_window(ventana_form_editar_registro)
+
+    def obtener_nombre_grupo_por_id(self, id_grupo):
+        grupo = gruposColeccion.find_one({"id_grupo": id_grupo}, {"_id": 0, "nombre": 1})
+        return grupo["nombre"] if grupo else None
+
+    def obtener_datos_registro_seleccionado(self, selected_item):
+        item_values = self.tree_asistencia.item(selected_item, 'values')
+        cedula_estudiante = item_values[0]
+        id_grupo = int(item_values[1])
+        id_materia = item_values[2]
+        fecha = item_values[3]
+        asistio = item_values[4]
+
+        datos_registro = {
+            'cedula_Est': cedula_estudiante,
+            'id_grupo': id_grupo,
+            'id_materia': id_materia,
+            'fecha': fecha,
+            'asistio': asistio
+        }
+
+        return datos_registro
+
     def actualizar_tabla_asistencia(self):
-        # Obtener datos y mostrarlos
+        #Get datos y mostrarlos
         datos_asistencia = self.interfaz_grafica.obtener_datos_asistencia(self.grupo_seleccionado, self.id_grupo_seleccionado)
 
         # Limpiar la tabla antes de agregar los nuevos datos
@@ -475,6 +642,7 @@ class VentanaGestionAsistencia:
             # NOT NULL
             if not cedula_estudiante or not id_grupo_seleccionado or not id_materia or not fecha:
                 messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                self.actualizar_tabla_asistencia()
                 return
 
             if not estudiantesColeccion.find_one({"cedula_Est": cedula_estudiante}):
@@ -506,7 +674,44 @@ class VentanaGestionAsistencia:
             if self.form_agregar_registro.master.winfo_exists():
                 self.form_agregar_registro.master.destroy()
 
+    def editar_registro(self):
+        if self.form_editar_registro:
+            # Datos del formulario
+            cedula_estudiante = self.form_editar_registro.entry_cedula_estudiante.get()
+            id_materia = self.form_editar_registro.label_id_materia_valor["text"]
+            fecha = self.form_editar_registro.obtener_valor_fecha()
+            asistio = self.form_editar_registro.obtener_valor_asistio()
 
+            # id_grupo
+            id_grupo_seleccionado = self.id_grupo_seleccionado if hasattr(self, 'id_grupo_seleccionado') else None
+
+            if not cedula_estudiante or not id_grupo_seleccionado or not id_materia or not fecha:
+                messagebox.showwarning("Advertencia", "Por favor, completa todos los campos.")
+                return
+            
+            filtro = {
+                'cedula_Est': cedula_estudiante,
+                'id_grupo': id_grupo_seleccionado,
+                'id_materia': id_materia,
+                'fecha': fecha
+            }
+
+            nuevo_registro = {
+                'cedula_Est': cedula_estudiante,
+                'id_grupo': id_grupo_seleccionado,
+                'id_materia': id_materia,
+                'fecha': fecha,
+                'asistio': asistio
+            }
+
+            asistenciaColeccion.update_one(filtro, {"$set": nuevo_registro}, upsert=True)
+
+            messagebox.showinfo("Éxito", "Se editó correctamente el registro de asistencia.")
+            self.actualizar_tabla_asistencia()
+
+            if self.form_editar_registro.master.winfo_exists():
+                self.form_editar_registro.master.destroy()
+                
 class InterfazGrafica:
 
     def __init__(self, master):
