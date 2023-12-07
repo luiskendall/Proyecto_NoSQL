@@ -40,6 +40,9 @@ class FormularioAgregarAnuncio:
 
         self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
 
+        self.master.grid_columnconfigure(0, weight=1)
+        self.master.grid_columnconfigure(1, weight=1)
+
         self.label_id_anuncio = ttk.Label(master, text="ID Anuncio:")
         self.label_id_anuncio.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
@@ -58,8 +61,13 @@ class FormularioAgregarAnuncio:
         self.entry_contenido = ttk.Entry(master)
         self.entry_contenido.grid(row=2, column=1, padx=10, pady=10)
 
-        self.btn_agregar = ttk.Button(master, text="Agregar", command=lambda: [callback_agregar(), master.destroy()])
-        self.btn_agregar.grid(row=3, column=0, columnspan=2, pady=10)
+        self.button_frame = ttk.Frame(master)
+        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+        self.btn_agregar = ttk.Button(self.button_frame, text="Agregar", command=lambda: [callback_agregar(), master.destroy()])
+        self.btn_agregar.grid(row=0, column=0)
+        self.btn_agregar.config(width=15)
 
 class FormularioEditarAnuncio:
 
@@ -76,6 +84,9 @@ class FormularioEditarAnuncio:
 
         self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
 
+        self.master.grid_columnconfigure(0, weight=1)
+        self.master.grid_columnconfigure(1, weight=1)
+
         self.label_id_anuncio = ttk.Label(master, text="ID Anuncio:")
         self.label_id_anuncio.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
@@ -94,8 +105,13 @@ class FormularioEditarAnuncio:
         self.entry_contenido = ttk.Entry(master)
         self.entry_contenido.grid(row=2, column=1, padx=10, pady=10)
 
-        self.btn_editar = ttk.Button(master, text="Editar", command=lambda: [callback_editar(), master.destroy()])
-        self.btn_editar.grid(row=3, column=0, columnspan=2, pady=10)
+        self.button_frame = ttk.Frame(master)
+        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+        self.btn_editar = ttk.Button(self.button_frame, text="Editar", command=lambda: [callback_editar(), master.destroy()])
+        self.btn_editar.grid(row=0, column=0)
+        self.btn_editar.config(width=15)
 
 class FormularioEliminarAnuncio:
 
@@ -112,14 +128,22 @@ class FormularioEliminarAnuncio:
 
         self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
 
+        self.master.grid_columnconfigure(0, weight=1)
+        self.master.grid_columnconfigure(1, weight=1)
+
         self.label_id_anuncio = ttk.Label(master, text="ID Anuncio:")
         self.label_id_anuncio.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
         self.entry_id_anuncio = ttk.Entry(master)
         self.entry_id_anuncio.grid(row=0, column=1, padx=10, pady=10)
 
-        self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_id_anuncio.get()), master.destroy()])
-        self.btn_eliminar.grid(row=1, column=0, columnspan=2, pady=10)
+        self.button_frame = ttk.Frame(master)
+        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+        self.btn_eliminar = ttk.Button(self.button_frame, text="Eliminar", command=lambda: [callback_eliminar(self.entry_id_anuncio.get()), master.destroy()])
+        self.btn_eliminar.grid(row=0, column=0)
+        self.btn_eliminar.config(width=15)
 
 class FormularioAgregarAsistencia:
 
@@ -356,6 +380,8 @@ class VentanaGestionAnuncios:
             # NOT NULL
             if not id_anuncio or not titulo or not contenido:
                 messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                self.master.deiconify() 
+                self.master.lift()
                 return
             
             #Check Id Anuncio
@@ -386,6 +412,8 @@ class VentanaGestionAnuncios:
             # NOT NULL
             if not id_anuncio or not titulo or not contenido:
                 messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                self.master.deiconify() 
+                self.master.lift()
                 return
 
             # IF NOT EXISTS
@@ -410,6 +438,8 @@ class VentanaGestionAnuncios:
         # NOT NULL
             if not id_anuncio:
                 messagebox.showwarning("Advertencia", "Por favor, ingresa el ID del anuncio.")
+                self.master.deiconify() 
+                self.master.lift()
                 return
 
         # IF NOT EXISTS
@@ -598,10 +628,6 @@ class VentanaGestionAsistencia:
             )
             ventana_form_editar_registro.wait_window(ventana_form_editar_registro)
 
-    def obtener_nombre_grupo_por_id(self, id_grupo):
-        grupo = gruposColeccion.find_one({"id_grupo": id_grupo}, {"_id": 0, "nombre": 1})
-        return grupo["nombre"] if grupo else None
-
     def obtener_datos_registro_seleccionado(self, selected_item):
         item_values = self.tree_asistencia.item(selected_item, 'values')
         cedula_estudiante = item_values[0]
@@ -651,12 +677,12 @@ class VentanaGestionAsistencia:
 
             id_grupo = self.obtener_id_grupo_por_nombre(nombre_grupo)
 
-            # Verificar si todos los campos están completos
+            #NOT NULL
             if not (cedula_estudiante and id_grupo and id_materia and fecha):
                 messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                self.actualizar_tabla_asistencia()
                 return
 
-            # Verificaciones adicionales (opcional)
             if not estudiantesColeccion.find_one({"cedula_Est": cedula_estudiante}):
                 messagebox.showwarning("Advertencia", f"No existe un estudiante con la cédula '{cedula_estudiante}'.")
                 return
