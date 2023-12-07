@@ -492,6 +492,10 @@ class VentanaGestionAsistencia:
         self.btn_editar_registro = ttk.Button(self.btn_frame, text="Editar Registro", command=self.mostrar_form_editar_registro)
         self.btn_editar_registro.pack(side=tk.LEFT, padx=5)
 
+        #ELIMINAR Asistencia
+        self.btn_eliminar_registro = ttk.Button(self.btn_frame, text="Eliminar Registro", command=self.eliminar_registro)
+        self.btn_eliminar_registro.pack(side=tk.LEFT, padx=5)
+
         
         window_width = 1050
         window_height = 300  
@@ -533,6 +537,13 @@ class VentanaGestionAsistencia:
         self.last_selected_item = None
         self.tree_asistencia.bind('<ButtonRelease-1>', lambda event: self.seleccionar_registro(event))
         
+        self.master.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    #Abrir Seleccion de grupos
+    def on_close(self):
+        self.master.destroy()
+        self.interfaz_grafica.abrir_ventana_seleccion_grupo()
+    
     def seleccionar_registro(self, event):
         #Registro seleccionado
         selected_item = self.tree_asistencia.selection()
@@ -596,8 +607,10 @@ class VentanaGestionAsistencia:
         cedula_estudiante = item_values[0]
         id_grupo = int(item_values[1])
         id_materia = item_values[2]
-        fecha = item_values[3]
+        fecha_str = item_values[3].split(" ")[0]
         asistio = item_values[4]
+
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d")
 
         datos_registro = {
             'cedula_Est': cedula_estudiante,
@@ -613,7 +626,6 @@ class VentanaGestionAsistencia:
         #Get datos y mostrarlos
         datos_asistencia = self.interfaz_grafica.obtener_datos_asistencia(self.grupo_seleccionado, self.id_grupo_seleccionado)
 
-        # Limpiar la tabla antes de agregar los nuevos datos
         for item in self.tree_asistencia.get_children():
             self.tree_asistencia.delete(item)
 
@@ -637,20 +649,16 @@ class VentanaGestionAsistencia:
             fecha = self.form_agregar_registro.obtener_valor_fecha()
             asistio = self.form_agregar_registro.obtener_valor_asistio()
 
-            id_grupo_seleccionado = self.id_grupo_seleccionado if hasattr(self, 'id_grupo_seleccionado') else None
-        
-            # NOT NULL
-            if not cedula_estudiante or not id_grupo_seleccionado or not id_materia or not fecha:
+            id_grupo = self.obtener_id_grupo_por_nombre(nombre_grupo)
+
+            # Verificar si todos los campos están completos
+            if not (cedula_estudiante and id_grupo and id_materia and fecha):
                 messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
-                self.actualizar_tabla_asistencia()
                 return
 
+            # Verificaciones adicionales (opcional)
             if not estudiantesColeccion.find_one({"cedula_Est": cedula_estudiante}):
                 messagebox.showwarning("Advertencia", f"No existe un estudiante con la cédula '{cedula_estudiante}'.")
-                return
-            
-            if not gruposColeccion.find_one({"id_grupo": id_grupo_seleccionado}):
-                messagebox.showwarning("Advertencia", f"No existe un grupo con el ID '{id_grupo_seleccionado}'.")
                 return
 
             if not materiasColeccion.find_one({"id_materia": id_materia}):
@@ -660,7 +668,7 @@ class VentanaGestionAsistencia:
             #INSERT Asistencia
             nuevo_registro = {
                 'cedula_Est': cedula_estudiante,
-                'id_grupo': id_grupo_seleccionado,
+                'id_grupo': id_grupo,  
                 'id_materia': id_materia,
                 'fecha': fecha,
                 'asistio': asistio
@@ -704,6 +712,7 @@ class VentanaGestionAsistencia:
                 'asistio': asistio
             }
 
+            #EDITAR Asistencia
             asistenciaColeccion.update_one(filtro, {"$set": nuevo_registro}, upsert=True)
 
             messagebox.showinfo("Éxito", "Se editó correctamente el registro de asistencia.")
@@ -711,7 +720,37 @@ class VentanaGestionAsistencia:
 
             if self.form_editar_registro.master.winfo_exists():
                 self.form_editar_registro.master.destroy()
-                
+
+    def eliminar_registro(self):
+        selected_item = self.tree_asistencia.selection()
+        if not selected_item:
+            messagebox.showwarning("Advertencia", "Por favor, selecciona un registro para eliminar.")
+            self.actualizar_tabla_asistencia()
+            return
+
+        #Get datos registro seleccionado
+        datos_registro = self.obtener_datos_registro_seleccionado(selected_item[0])
+
+        respuesta = messagebox.askyesno("Confirmación", "¿Estás seguro de que quieres eliminar este registro?")
+        if respuesta:
+            try:
+                filtro = {
+                    'cedula_Est': datos_registro['cedula_Est'],
+                    'id_grupo': datos_registro['id_grupo'],
+                    'id_materia': datos_registro['id_materia'],
+                    'fecha': datos_registro['fecha']
+                }
+
+                #DELETE Asistencia
+                asistenciaColeccion.delete_one(filtro)
+
+                self.actualizar_tabla_asistencia()
+                messagebox.showinfo("Éxito", "Registro eliminado correctamente.")
+                self.master.lift()
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Ocurrió un error al eliminar el registro: {e}")
+
 class InterfazGrafica:
 
     def __init__(self, master):
