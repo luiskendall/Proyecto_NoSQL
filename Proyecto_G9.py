@@ -1185,9 +1185,6 @@ class InterfazGrafica:
             self.ventana_gestion_estudiantes = tk.Toplevel(self.master)
             app_gestion_estudiantes = VentanaGestionEstudiantes(self.ventana_gestion_estudiantes, self)
 
-        self.form_seleccion_grupo = VentanaSeleccionGrupo(ventana_seleccion_grupo, self.abrir_ventana_gestion_asistencia)
-        ventana_seleccion_grupo.wait_window(ventana_seleccion_grupo)
-
 
 # ---------------------------------------MAIN WINDOW--------------------------------------- #
 root = tk.Tk()
