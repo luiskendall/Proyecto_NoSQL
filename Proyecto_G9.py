@@ -4,9 +4,10 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
 
-
+# ---------------------------------------CONEXION--------------------------------------- #
 connectionString = "mongodb+srv://admin:admin@proyectog9.etru1b1.mongodb.net/?retryWrites=true&w=majority"
 
+# ---------------------------------------MENSAJE DE ERROR--------------------------------------- #
 try:
     client = pymongo.MongoClient(connectionString)
     print("Conexión exitosa.")
@@ -14,6 +15,7 @@ try:
 except pymongo.errors.ConnectionFailure as e:
     print("Error de conexión:", e)
 
+# ---------------------------------------COLECCIONES--------------------------------------- #
 db=client["Escuela"]
 anunciosColeccion = db["Anuncios"]
 asistenciaColeccion = db["Asistencia"]
@@ -24,7 +26,7 @@ materiasColeccion = db["Materias"]
 pagosMatriculaColeccion = db["Pagos_Matricula"]
 profesoresColeccion = db["Profesores"]
 
-
+# ---------------------------------------FORMULARIOS ANUNCIOS--------------------------------------- #
 class FormularioAgregarAnuncio:
 
     def __init__(self, master, callback_agregar, callback_editar=None):
@@ -145,13 +147,164 @@ class FormularioEliminarAnuncio:
         self.btn_eliminar.grid(row=0, column=0)
         self.btn_eliminar.config(width=15)
 
+class VentanaGestionAnuncios:
+    
+    def __init__(self, master, interfaz_grafica):
+        self.master = master
+        self.interfaz_grafica=interfaz_grafica
+
+        self.master.title("Gestión de Anuncios")
+
+        self.master.geometry("400x200")
+
+        widthScreen = root.winfo_screenwidth()
+        heightScreen = root.winfo_screenheight()
+
+        x_pos = (widthScreen - 400) // 2
+        y_pos = (heightScreen - 200) // 2
+        self.master.geometry(f"400x200+{x_pos}+{y_pos}")
+
+        self.label_titulo = tk.Label(master, text="Gestión de Anuncios", font=("Arial", 16))
+        self.label_titulo.pack(pady=10)
+
+        #AGREGAR ANUNCIO
+        self.btn_agregar_anuncio = tk.Button(master, text="Agregar Anuncio", command=self.mostrar_form_agregar)
+        self.btn_agregar_anuncio.pack(pady=10)
+
+        #EDITAR ANUNCIO
+        self.btn_editar_anuncio = tk.Button(master, text="Editar Anuncio", command=self.mostrar_form_editar)
+        self.btn_editar_anuncio.pack(pady=10)
+
+        #ELIMINAR ANUNCIO
+        self.btn_eliminar_anuncio = tk.Button(master, text="Eliminar Anuncio", command=self.mostrar_form_eliminar)
+        self.btn_eliminar_anuncio.pack(pady=10)
+
+        self.form_agregar = None
+        self.form_editar = None
+        self.form_eliminar = None
+
+    def mostrar_form_agregar(self):
+        if self.form_agregar and self.form_agregar.master.winfo_exists():
+            self.form_agregar.master.lift()
+        else:
+            ventana_form_agregar = tk.Toplevel(self.master)
+            self.form_agregar = FormularioAgregarAnuncio(ventana_form_agregar, self.agregar_anuncio)
+            ventana_form_agregar.wait_window(ventana_form_agregar)
+
+    def mostrar_form_editar(self):
+        if self.form_editar and self.form_editar.master.winfo_exists():
+            self.form_editar.master.lift()
+        else:
+            ventana_form_editar = tk.Toplevel(self.master)
+            self.form_editar = FormularioEditarAnuncio(ventana_form_editar, self.editar_anuncio)
+            ventana_form_editar.wait_window(ventana_form_editar)
+
+    def mostrar_form_eliminar(self):
+        if self.form_eliminar and self.form_eliminar.master.winfo_exists():
+            self.form_eliminar.master.lift()
+        else:
+            ventana_form_eliminar = tk.Toplevel(self.master)
+            self.form_eliminar = FormularioEliminarAnuncio(ventana_form_eliminar, self.eliminar_anuncio)
+
+    def agregar_anuncio(self):
+        if self.form_agregar:
+            # Get datos form
+            id_anuncio =self.form_agregar.entry_id_anuncio.get()
+            titulo = self.form_agregar.entry_titulo.get()
+            contenido = self.form_agregar.entry_contenido.get()
+
+            # NOT NULL
+            if not id_anuncio or not titulo or not contenido:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                self.master.deiconify() 
+                self.master.lift()
+                return
+            
+            #Check Id Anuncio
+            if anunciosColeccion.find_one({"id_anuncios": id_anuncio}):
+                messagebox.showwarning("Advertencia", f"El ID del anuncio '{id_anuncio}' ya existe. Por favor, elige otro.")
+                self.master.deiconify() 
+                self.master.lift() 
+            else:
+                anuncio = {"id_anuncios": id_anuncio, "titulo": titulo, "contenido": contenido}
+                anunciosColeccion.insert_one(anuncio)
+                messagebox.showinfo("Éxito", "Se ingresó correctamente el anuncio.")
+
+                #Cerrar ventana gestión
+                self.master.destroy() 
+
+                if self.form_agregar.master.winfo_exists():
+                    self.form_agregar.master.destroy()
+
+                self.interfaz_grafica.cargar_anuncios()
+
+    def editar_anuncio(self):
+        if self.form_editar:
+            # Get datos form
+            id_anuncio = self.form_editar.entry_id_anuncio.get()
+            titulo = self.form_editar.entry_titulo.get()
+            contenido = self.form_editar.entry_contenido.get()
+
+            # NOT NULL
+            if not id_anuncio or not titulo or not contenido:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                self.master.deiconify() 
+                self.master.lift()
+                return
+
+            # IF NOT EXISTS
+            if not anunciosColeccion.find_one({"id_anuncios": id_anuncio}):
+                messagebox.showwarning("Advertencia", f"El ID del anuncio '{id_anuncio}' no existe.")
+                self.master.deiconify() 
+                self.master.lift() 
+            else:
+                anunciosColeccion.update_one({"id_anuncios": id_anuncio}, {"$set": {"titulo": titulo, "contenido": contenido}})
+                messagebox.showinfo("Éxito", "Se modificó correctamente el anuncio.")
+
+                #Cerrar ventana gestión
+                self.master.destroy() 
+
+                if self.form_editar.master.winfo_exists():
+                    self.form_editar.master.destroy()
+
+                self.interfaz_grafica.cargar_anuncios()
+
+    def eliminar_anuncio(self, id_anuncio):
+        if self.form_eliminar:
+        # NOT NULL
+            if not id_anuncio:
+                messagebox.showwarning("Advertencia", "Por favor, ingresa el ID del anuncio.")
+                self.master.deiconify() 
+                self.master.lift()
+                return
+
+        # IF NOT EXISTS
+        anuncio = anunciosColeccion.find_one({"id_anuncios": id_anuncio})
+        if not anuncio:
+            messagebox.showwarning("Advertencia", f"No se encontró el anuncio con el ID '{id_anuncio}'.")
+            self.master.deiconify() 
+            self.master.lift() 
+        else:
+            anunciosColeccion.delete_one({"id_anuncios": id_anuncio})
+            messagebox.showinfo("Éxito", f"Se eliminó correctamente el anuncio con el ID '{id_anuncio}'.")
+
+            #Cerrar ventana gestión
+            self.master.destroy() 
+
+            if self.form_eliminar.master.winfo_exists():
+                self.form_eliminar.master.destroy()
+
+            self.interfaz_grafica.cargar_anuncios()
+
+
+# ---------------------------------------FORMULARIOS ASISTENCIA--------------------------------------- #
 class FormularioAgregarAsistencia:
 
     def __init__(self, master, callback_agregar_registro):
         self.master = master
         self.master.title("Agregar Nuevo Registro")
 
-        window_width = 340 
+        window_width = 370 
         window_height = 300
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
@@ -310,155 +463,6 @@ class FormularioEditarAsistencia:
     def obtener_nombres_grupos(self):
         nombres_grupos = gruposColeccion.distinct("nombre")
         return nombres_grupos
-
-class VentanaGestionAnuncios:
-    
-    def __init__(self, master, interfaz_grafica):
-        self.master = master
-        self.interfaz_grafica=interfaz_grafica
-
-        self.master.title("Gestión de Anuncios")
-
-        self.master.geometry("400x200")
-
-        widthScreen = root.winfo_screenwidth()
-        heightScreen = root.winfo_screenheight()
-
-        x_pos = (widthScreen - 400) // 2
-        y_pos = (heightScreen - 200) // 2
-        self.master.geometry(f"400x200+{x_pos}+{y_pos}")
-
-        self.label_titulo = tk.Label(master, text="Gestión de Anuncios", font=("Arial", 16))
-        self.label_titulo.pack(pady=10)
-
-        #AGREGAR ANUNCIO
-        self.btn_agregar_anuncio = tk.Button(master, text="Agregar Anuncio", command=self.mostrar_form_agregar)
-        self.btn_agregar_anuncio.pack(pady=10)
-
-        #EDITAR ANUNCIO
-        self.btn_editar_anuncio = tk.Button(master, text="Editar Anuncio", command=self.mostrar_form_editar)
-        self.btn_editar_anuncio.pack(pady=10)
-
-        #ELIMINAR ANUNCIO
-        self.btn_eliminar_anuncio = tk.Button(master, text="Eliminar Anuncio", command=self.mostrar_form_eliminar)
-        self.btn_eliminar_anuncio.pack(pady=10)
-
-        self.form_agregar = None
-        self.form_editar = None
-        self.form_eliminar = None
-
-    def mostrar_form_agregar(self):
-        if self.form_agregar and self.form_agregar.master.winfo_exists():
-            self.form_agregar.master.lift()
-        else:
-            ventana_form_agregar = tk.Toplevel(self.master)
-            self.form_agregar = FormularioAgregarAnuncio(ventana_form_agregar, self.agregar_anuncio)
-            ventana_form_agregar.wait_window(ventana_form_agregar)
-
-    def mostrar_form_editar(self):
-        if self.form_editar and self.form_editar.master.winfo_exists():
-            self.form_editar.master.lift()
-        else:
-            ventana_form_editar = tk.Toplevel(self.master)
-            self.form_editar = FormularioEditarAnuncio(ventana_form_editar, self.editar_anuncio)
-            ventana_form_editar.wait_window(ventana_form_editar)
-
-    def mostrar_form_eliminar(self):
-        if self.form_eliminar and self.form_eliminar.master.winfo_exists():
-            self.form_eliminar.master.lift()
-        else:
-            ventana_form_eliminar = tk.Toplevel(self.master)
-            self.form_eliminar = FormularioEliminarAnuncio(ventana_form_eliminar, self.eliminar_anuncio)
-
-    def agregar_anuncio(self):
-        if self.form_agregar:
-            # Get datos form
-            id_anuncio =self.form_agregar.entry_id_anuncio.get()
-            titulo = self.form_agregar.entry_titulo.get()
-            contenido = self.form_agregar.entry_contenido.get()
-
-            # NOT NULL
-            if not id_anuncio or not titulo or not contenido:
-                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
-                self.master.deiconify() 
-                self.master.lift()
-                return
-            
-            #Check Id Anuncio
-            if anunciosColeccion.find_one({"id_anuncios": id_anuncio}):
-                messagebox.showwarning("Advertencia", f"El ID del anuncio '{id_anuncio}' ya existe. Por favor, elige otro.")
-                self.master.deiconify() 
-                self.master.lift() 
-            else:
-                anuncio = {"id_anuncios": id_anuncio, "titulo": titulo, "contenido": contenido}
-                anunciosColeccion.insert_one(anuncio)
-                messagebox.showinfo("Éxito", "Se ingresó correctamente el anuncio.")
-
-                #Cerrar ventana gestión
-                self.master.destroy() 
-
-                if self.form_agregar.master.winfo_exists():
-                    self.form_agregar.master.destroy()
-
-                self.interfaz_grafica.cargar_anuncios()
-
-    def editar_anuncio(self):
-        if self.form_editar:
-            # Get datos form
-            id_anuncio = self.form_editar.entry_id_anuncio.get()
-            titulo = self.form_editar.entry_titulo.get()
-            contenido = self.form_editar.entry_contenido.get()
-
-            # NOT NULL
-            if not id_anuncio or not titulo or not contenido:
-                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
-                self.master.deiconify() 
-                self.master.lift()
-                return
-
-            # IF NOT EXISTS
-            if not anunciosColeccion.find_one({"id_anuncios": id_anuncio}):
-                messagebox.showwarning("Advertencia", f"El ID del anuncio '{id_anuncio}' no existe.")
-                self.master.deiconify() 
-                self.master.lift() 
-            else:
-                anunciosColeccion.update_one({"id_anuncios": id_anuncio}, {"$set": {"titulo": titulo, "contenido": contenido}})
-                messagebox.showinfo("Éxito", "Se modificó correctamente el anuncio.")
-
-                #Cerrar ventana gestión
-                self.master.destroy() 
-
-                if self.form_editar.master.winfo_exists():
-                    self.form_editar.master.destroy()
-
-                self.interfaz_grafica.cargar_anuncios()
-
-    def eliminar_anuncio(self, id_anuncio):
-        if self.form_eliminar:
-        # NOT NULL
-            if not id_anuncio:
-                messagebox.showwarning("Advertencia", "Por favor, ingresa el ID del anuncio.")
-                self.master.deiconify() 
-                self.master.lift()
-                return
-
-        # IF NOT EXISTS
-        anuncio = anunciosColeccion.find_one({"id_anuncios": id_anuncio})
-        if not anuncio:
-            messagebox.showwarning("Advertencia", f"No se encontró el anuncio con el ID '{id_anuncio}'.")
-            self.master.deiconify() 
-            self.master.lift() 
-        else:
-            anunciosColeccion.delete_one({"id_anuncios": id_anuncio})
-            messagebox.showinfo("Éxito", f"Se eliminó correctamente el anuncio con el ID '{id_anuncio}'.")
-
-            #Cerrar ventana gestión
-            self.master.destroy() 
-
-            if self.form_eliminar.master.winfo_exists():
-                self.form_eliminar.master.destroy()
-
-            self.interfaz_grafica.cargar_anuncios()
 
 class VentanaSeleccionGrupo:
 
@@ -777,6 +781,300 @@ class VentanaGestionAsistencia:
             except Exception as e:
                 messagebox.showerror("Error", f"Ocurrió un error al eliminar el registro: {e}")
 
+# ---------------------------------------FORMULARIOS ESTUDIANTES--------------------------------------- #
+class FormularioAgregarEstudiante:
+
+    def __init__(self, master, callback_agregar, callback_editar=None):
+        self.master = master
+        self.master.title("Agregar Nuevo Estudiante")
+
+        window_width = 380 
+        window_height = 300
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        #CEDULA
+        self.label_cedula_Est = ttk.Label(master, text="Cédula del Estudiante:")
+        self.label_cedula_Est.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        
+        self.entry_cedula_Est = ttk.Entry(master)
+        self.entry_cedula_Est.grid(row=0, column=1, padx=10, pady=10)
+        #NOMBRE
+        self.label_nombre = ttk.Label(master, text="Nombre:")
+        self.label_nombre.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_nombre = ttk.Entry(master)
+        self.entry_nombre.grid(row=1, column=1, padx=10, pady=10)
+        #EDAD
+        self.label_edad = ttk.Label(master, text="Edad:")
+        self.label_edad.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_edad = ttk.Entry(master)
+        self.entry_edad.grid(row=2, column=1, padx=10, pady=10)
+        #GRUPO
+        self.label_id_grupo = ttk.Label(master, text="Grupo:")
+        self.label_id_grupo.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_id_grupo = ttk.Entry(master)
+        self.entry_id_grupo.grid(row=3, column=1, padx=10, pady=10)
+        #CORREO
+        self.label_correo = ttk.Label(master, text="Correo Electrónico:")
+        self.label_correo.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_correo = ttk.Entry(master)
+        self.entry_correo.grid(row=4, column=1, padx=10, pady=10)
+
+        #Button Volver
+        self.btn_agregar = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_agregar.grid(row=5, column=0, columnspan=1, pady=10)
+
+        #Button Agregar
+        self.btn_agregar = ttk.Button(master, text="Agregar", command=lambda: [callback_agregar(), master.destroy()])
+        self.btn_agregar.grid(row=5, column=1, columnspan=2, pady=10)
+
+class FormularioEditarEstudiante:
+
+    def __init__(self, master, callback_editar):
+        self.master = master
+        self.master.title("Editar Anuncio")
+
+        window_width = 380 
+        window_height = 300
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        #CEDULA
+        self.label_cedula_Est = ttk.Label(master, text="Cédula del Estudiante:")
+        self.label_cedula_Est.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        
+        self.entry_cedula_Est = ttk.Entry(master)
+        self.entry_cedula_Est.grid(row=0, column=1, padx=10, pady=10)
+        #NOMBRE
+        self.label_nombre = ttk.Label(master, text="Nombre:")
+        self.label_nombre.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_nombre = ttk.Entry(master)
+        self.entry_nombre.grid(row=1, column=1, padx=10, pady=10)
+        #EDAD
+        self.label_edad = ttk.Label(master, text="Edad:")
+        self.label_edad.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_edad = ttk.Entry(master)
+        self.entry_edad.grid(row=2, column=1, padx=10, pady=10)
+        #GRUPO
+        self.label_id_grupo = ttk.Label(master, text="Grupo:")
+        self.label_id_grupo.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_id_grupo = ttk.Entry(master)
+        self.entry_id_grupo.grid(row=3, column=1, padx=10, pady=10)
+        #CORREO
+        self.label_correo = ttk.Label(master, text="Correo Electrónico:")
+        self.label_correo.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_correo = ttk.Entry(master)
+        self.entry_correo.grid(row=4, column=1, padx=10, pady=10)
+
+        #Button Volver
+        self.btn_agregar = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_agregar.grid(row=5, column=0, columnspan=1, pady=10)
+
+        #Button Editar
+        self.btn_editar = ttk.Button(master, text="Editar", command=lambda: [callback_editar(), master.destroy()])
+        self.btn_editar.grid(row=5, column=1, columnspan=2, pady=10)
+
+class FormularioEliminarEstudiante:
+
+    def __init__(self, master, callback_eliminar):
+        self.master = master
+        self.master.title("Eliminar Estudiante")
+
+        window_width = 350
+        window_height = 150
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        self.label_cedula_Est = ttk.Label(master, text="Cédula de estudiante:")
+        self.label_cedula_Est.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_cedula_Est = ttk.Entry(master)
+        self.entry_cedula_Est.grid(row=0, column=1, padx=10, pady=10)
+
+        #Button Volver
+        self.btn_agregar = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_agregar.grid(row=1, column=0, columnspan=1, pady=10)
+
+        #Button Eliminar
+        self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_cedula_Est.get()), master.destroy()])
+        self.btn_eliminar.grid(row=1, column=1, columnspan=2, pady=10)
+
+class VentanaGestionEstudiantes:
+    
+    def __init__(self, master, interfaz_grafica):
+        self.master = master
+        self.interfaz_grafica=interfaz_grafica
+
+        self.master.title("Gestión de Estudiantes")
+
+        self.master.geometry("400x200")
+
+        widthScreen = root.winfo_screenwidth()
+        heightScreen = root.winfo_screenheight()
+
+        x_pos = (widthScreen - 400) // 2
+        y_pos = (heightScreen - 200) // 2
+        self.master.geometry(f"400x200+{x_pos}+{y_pos}")
+
+        self.label_titulo = tk.Label(master, text="Gestión de Estudiantes", font=("Arial", 16))
+        self.label_titulo.pack(pady=10)
+
+        #AGREGAR ESTUDIANTE
+        self.btn_agregar_estudiante = tk.Button(master, text="Agregar Estudiante", command=self.mostrar_form_agregar_estudiante)
+        self.btn_agregar_estudiante.pack(pady=10)
+
+        #EDITAR ESTUDIANTE
+        self.btn_editar_estudiante = tk.Button(master, text="Editar Estudiante", command=self.mostrar_form_editar_estudiante)
+        self.btn_editar_estudiante.pack(pady=10)
+
+        #ELIMINAR ESTUDIANTE
+        self.btn_eliminar_estudiante = tk.Button(master, text="Eliminar Estudiante", command=self.mostrar_form_eliminar_estudiante)
+        self.btn_eliminar_estudiante.pack(pady=10)
+
+        self.form_agregar_estudiante = None
+        self.form_editar_estudiante = None
+        self.form_eliminar_estudiante= None 
+
+    def mostrar_form_agregar_estudiante(self):
+        ventana_form_agregar_estudiante = tk.Toplevel(self.master)
+        self.form_agregar_estudiante = FormularioAgregarEstudiante(
+            ventana_form_agregar_estudiante, self.agregar_estudiante)
+        ventana_form_agregar_estudiante.wait_window(ventana_form_agregar_estudiante)
+
+    def mostrar_form_editar_estudiante(self):
+        ventana_form_editar_estudiante = tk.Toplevel(self.master)
+        self.form_editar_estudiante = FormularioEditarEstudiante(ventana_form_editar_estudiante, self.editar_estudiante)
+        ventana_form_editar_estudiante.wait_window(ventana_form_editar_estudiante)
+
+    def mostrar_form_eliminar_estudiante(self):
+        ventana_form_eliminar_estudiante = tk.Toplevel(self.master)
+        self.form_eliminar_estudiante = FormularioEliminarEstudiante(ventana_form_eliminar_estudiante, self.eliminar_estudiante)
+
+    #AGREGAR ESTUDIANTE
+    def agregar_estudiante(self):
+        print("Adding student...")
+        if self.form_agregar_estudiante:
+            # Get datos form
+            cedula_Est = self.form_agregar_estudiante.entry_cedula_Est.get()
+            nombre = self.form_agregar_estudiante.entry_nombre.get()
+            edad = self.form_agregar_estudiante.entry_edad.get()
+            id_grupo = self.form_agregar_estudiante.entry_id_grupo.get()
+            correo = self.form_agregar_estudiante.entry_correo.get()
+
+            # NOT NULL
+            if not cedula_Est or not nombre or not edad or not id_grupo or not correo:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                return
+
+            # Check cedula estudiante
+            if estudiantesColeccion.find_one({"cedula_Est": cedula_Est}):
+                messagebox.showwarning(
+                    "Advertencia", f"La cédula '{cedula_Est}' ya existe. Por favor, elige otra."
+                )
+                return
+
+            estudiante = {
+                "cedula_Est": cedula_Est,
+                "nombre": nombre,
+                "edad": edad,
+                "id_grupo": id_grupo,
+                "correo": correo,
+            }
+
+            try:
+                estudiantesColeccion.insert_one(estudiante)
+                print("Student added successfully!")
+                messagebox.showinfo("Éxito", "Se ingresó correctamente al estudiante.")
+
+                # Cerrar ventana gestión
+                self.master.destroy()
+
+                if self.form_agregar_estudiante.master.winfo_exists():
+                    self.form_agregar_estudiante.master.destroy()
+            except Exception as e:
+                print(f"Error adding student: {e}")
+                messagebox.showerror("Error", f"Error adding student: {e}")
+                return
+
+    #EDITAR ESTUDIANTE
+    def editar_estudiante(self):
+        if self.form_editar_estudiante:
+            # Get datos form
+            cedula_Est = self.form_editar_estudiante.entry_cedula_Est.get()
+            nombre = self.form_editar_estudiante.entry_nombre.get()
+            edad = self.form_editar_estudiante.entry_edad.get()
+            id_grupo = self.form_editar_estudiante.entry_id_grupo.get()
+            correo = self.form_editar_estudiante.entry_correo.get()
+
+            # NOT NULL
+            if not cedula_Est or not nombre or not edad or not id_grupo or not correo:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                return
+
+            # IF NOT EXISTS
+            if not estudiantesColeccion.find_one({"cedula_Est": cedula_Est}):
+                messagebox.showwarning("Advertencia", f"La cédula '{cedula_Est}' no existe.")
+                return
+
+            estudiantesColeccion.update_one(
+                {"cedula_Est": cedula_Est},
+                {"$set": {"nombre": nombre, "edad": edad, "id_grupo": id_grupo, "correo": correo}},
+            )
+
+            messagebox.showinfo("Éxito", "Se modificó correctamente al estudiante.")
+
+            # Cerrar ventana gestión
+            self.master.destroy()
+
+            if self.form_editar_estudiante.master.winfo_exists():
+                self.form_editar_estudiante.master.destroy()
+
+
+    # ELIMINAR ESTUDIANTE
+    def eliminar_estudiante(self, cedula_Est):
+        if self.form_eliminar_estudiante:
+            # NOT NULL
+            if not cedula_Est:
+                messagebox.showwarning("Advertencia", "Por favor, ingresa la cédula del estudiante.")
+                return
+
+            # IF NOT EXISTS
+            estudiante = estudiantesColeccion.find_one({"cedula_Est": cedula_Est})
+            if not estudiante:
+                messagebox.showwarning("Advertencia", f"No se encontró la cédula '{cedula_Est}'.")
+                return
+
+            estudiantesColeccion.delete_one({"cedula_Est": cedula_Est})
+            messagebox.showinfo("Éxito", f"Se eliminó correctamente al estudiante con la cédula '{cedula_Est}'.")
+
+            # Cerrar ventana gestión
+            self.master.destroy()
+
+            if self.form_eliminar_estudiante.master.winfo_exists():
+                self.form_eliminar_estudiante.master.destroy()
+
+
+# ---------------------------------------INTERFAZ GRAFICA--------------------------------------- #
 class InterfazGrafica:
 
     def __init__(self, master):
@@ -786,28 +1084,35 @@ class InterfazGrafica:
         self.label_titulo = tk.Label(master, text="Anuncios del Centro Educativo", font=("Arial", 16))
         self.label_titulo.pack(pady=10)
 
-        # Show Anuncios
+        # ---------------------------------------SHOW ANUNCIOS--------------------------------------- #
         self.text_anuncios = tk.Text(master, wrap=tk.WORD, height=10, width=60, state=tk.DISABLED)
         self.text_anuncios.pack(padx=10, pady=10)
 
         self.frame_botones_gestion = tk.Frame(master)
         self.frame_botones_gestion.pack(pady=10)
 
+        # ---------------------------------------BOTONES DE GESTION--------------------------------------- #
+        # Button Estudiantes
+        self.btn_gestion_anuncios = tk.Button(master, text="Gestionar Estudiantes", command=self.abrir_ventana_gestion_estudiantes, background="blue")
+        self.btn_gestion_anuncios.pack(pady=10)
+
+        # Show Anuncios
         self.btn_gestion_anuncios = tk.Button(self.frame_botones_gestion, text="Gestionar Anuncios", command=self.abrir_ventana_gestion_anuncios)
         self.btn_gestion_anuncios.pack(side=tk.LEFT, padx=5)
 
         self.form_seleccion_grupo = None  
 
+        # Button Anuncios
         self.btn_gestion_asistencia = tk.Button(self.frame_botones_gestion, text="Gestionar Asistencia", command=self.abrir_ventana_seleccion_grupo)
         self.btn_gestion_asistencia.pack(side=tk.LEFT, padx=5)
 
         self.cargar_anuncios()
-
+    # ---------------------------------------MOSTRAR ANUNCIOS--------------------------------------- #
     def cargar_anuncios(self):
         self.text_anuncios.config(state=tk.NORMAL)  
         self.text_anuncios.delete(1.0, tk.END)
 
-        #Get Anuncios
+        # ---------------------------------------GET ANUNCIOS--------------------------------------- #
         anuncios = anunciosColeccion.find()
 
         for anuncio in anuncios:
@@ -817,6 +1122,7 @@ class InterfazGrafica:
         self.text_anuncios.config(state=tk.DISABLED)  
         self.text_anuncios.config(font=("Arial", 12), fg="black")
 
+    # ---------------------------------------DATOS ASISTENCIA--------------------------------------- #
     def obtener_datos_asistencia(self, grupo_seleccionado, id_grupo_seleccionado):
      #Depende del nombre del grupo, traigo el Id
      id_grupo = gruposColeccion.find_one({"nombre": grupo_seleccionado}, {"_id": 0, "id_grupo": 1})
@@ -840,7 +1146,8 @@ class InterfazGrafica:
      else:
         print("No se ha seleccionado un grupo.")
         return []
-
+    
+    # ---------------------------------------VENTANA GESTION ANUNCIOS--------------------------------------- #
     def abrir_ventana_gestion_anuncios(self):
         if hasattr(self, 'ventana_gestion_anuncios') and self.ventana_gestion_anuncios.winfo_exists():
             self.ventana_gestion_anuncios.lift()
@@ -848,6 +1155,7 @@ class InterfazGrafica:
             self.ventana_gestion_anuncios = tk.Toplevel(self.master)
             app_gestion_anuncios = VentanaGestionAnuncios(self.ventana_gestion_anuncios, self)
 
+    # ---------------------------------------SELECCION DE GRUPO--------------------------------------- #
     def abrir_ventana_seleccion_grupo(self):
        if self.form_seleccion_grupo and self.form_seleccion_grupo.master.winfo_exists():
         self.form_seleccion_grupo.master.lift()
@@ -856,6 +1164,7 @@ class InterfazGrafica:
         self.form_seleccion_grupo = VentanaSeleccionGrupo(ventana_seleccion_grupo, self.abrir_ventana_gestion_asistencia)
         ventana_seleccion_grupo.wait_window(ventana_seleccion_grupo)
 
+    # ---------------------------------------VENTANA GESTION ASISTENCIA--------------------------------------- #
     def abrir_ventana_gestion_asistencia(self, grupo_seleccionado, id_grupo_seleccionado):
      if self.form_seleccion_grupo is not None:
         grupo_seleccionado = self.form_seleccion_grupo.combo_grupos.get()
@@ -868,7 +1177,19 @@ class InterfazGrafica:
                 self.ventana_gestion_asistencia = tk.Toplevel(self.master)
                 app_gestion_asistencia = VentanaGestionAsistencia(self.ventana_gestion_asistencia, self, grupo_seleccionado, id_grupo_seleccionado)
 
-#Main Window
+    # ---------------------------------------VENTANA GESTION ESTUDIANTES--------------------------------------- #
+    def abrir_ventana_gestion_estudiantes(self):
+        if hasattr(self, 'ventana_gestion_estudiantes') and self.ventana_gestion_estudiantes.winfo_exists():
+            self.ventana_gestion_estudiantes.lift()
+        else:
+            self.ventana_gestion_estudiantes = tk.Toplevel(self.master)
+            app_gestion_estudiantes = VentanaGestionEstudiantes(self.ventana_gestion_estudiantes, self)
+
+        self.form_seleccion_grupo = VentanaSeleccionGrupo(ventana_seleccion_grupo, self.abrir_ventana_gestion_asistencia)
+        ventana_seleccion_grupo.wait_window(ventana_seleccion_grupo)
+
+
+# ---------------------------------------MAIN WINDOW--------------------------------------- #
 root = tk.Tk()
 
 widthScreen = root.winfo_screenwidth()
