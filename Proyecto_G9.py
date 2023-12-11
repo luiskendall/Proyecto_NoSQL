@@ -1048,7 +1048,6 @@ class VentanaGestionEstudiantes:
             if self.form_editar_estudiante.master.winfo_exists():
                 self.form_editar_estudiante.master.destroy()
 
-
     # ELIMINAR ESTUDIANTE
     def eliminar_estudiante(self, cedula_Est):
         if self.form_eliminar_estudiante:
@@ -1079,7 +1078,7 @@ class FormularioAgregarMateria:
         self.master = master
         self.master.title("Agregar nueva materia")
 
-        window_width = 380 
+        window_width = 400 
         window_height = 200
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
@@ -1098,26 +1097,25 @@ class FormularioAgregarMateria:
         self.label_descripcion.grid(row=1, column=0, padx=10, pady=10, sticky="w")
         
         self.entry_descripcion = ttk.Entry(master)
-        self.entry_descripcion.grid(row=0, column=1, padx=10, pady=10)
+        self.entry_descripcion.grid(row=1, column=1, padx=10, pady=10)
 
         self.label_id_materia = ttk.Label(master, text="ID Materia:")
         self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
         
         self.entry_id_materia = ttk.Entry(master)
-        self.entry_id_materia.grid(row=0, column=1, padx=10, pady=10)
+        self.entry_id_materia.grid(row=2, column=1, padx=10, pady=10)
 
-        self.btn_agregar_materia = ttk.Button(master, text="Agregar materia", command=lambda:
-        [callback_agregar_registro(), master.destroy()])
+        self.btn_agregar_materia = ttk.Button(master, text="Agregar materia", command=lambda: [callback_agregar_registro(), master.destroy()])
         self.btn_agregar_materia.grid(row=5, column=0, columnspan=2, pady=10)
 
 class FormularioActualizarMateria:
 
-    def __init__(self, master, descripcion, id_materia, callback_editar):
+    def __init__(self, master, callback_editar):
         self.master = master
         self.master.title("Editar Materia")
     
-        window_width = 340
-        window_height = 350
+        window_width = 400
+        window_height = 200
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
         x_pos = (screen_width - window_width) // 2
@@ -1127,32 +1125,29 @@ class FormularioActualizarMateria:
 
         self.label_nombre = ttk.Label(master, text="Nombre de la materia:")
         self.label_nombre.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-
+        
         self.entry_nombre = ttk.Entry(master)
         self.entry_nombre.grid(row=0, column=1, padx=10, pady=10)
 
-
-        self.label_descripcion = ttk.Label(master, text="Descripcion:")
+        self.label_descripcion = ttk.Label(master, text="Descripcion de la materia:")
         self.label_descripcion.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-
-        self.label_descripcion_valor = ttk.Label(master, text=descripcion)
-        self.label_descripcion_valor.grid(row=1, column=1, padx=10, pady=10)
-
+        
+        self.entry_descripcion = ttk.Entry(master)
+        self.entry_descripcion.grid(row=1, column=1, padx=10, pady=10)
 
         self.label_id_materia = ttk.Label(master, text="ID Materia:")
         self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        
+        self.entry_id_materia = ttk.Entry(master)
+        self.entry_id_materia.grid(row=2, column=1, padx=10, pady=10)
 
-        self.label_id_materia_valor = ttk.Label(master, text=id_materia)
-        self.label_id_materia_valor.grid(row=2, column=1, padx=10, pady=10)
+        #Button Volver
+        self.btn_agregar = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_agregar.grid(row=3, column=0, columnspan=1, pady=10)
 
-
-        self.button_frame = ttk.Frame(master)
-        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
-        self.button_frame.grid_columnconfigure(0, weight=1)
-
-        self.btn_editar_registro = ttk.Button(self.button_frame, text="Actualizar materia", command=lambda: [callback_editar(), master.destroy()])
-        self.btn_editar_registro.grid(row=0, column=0) 
-        self.btn_editar_registro.config(width=15)  
+        #Button Editar
+        self.btn_editar = ttk.Button(master, text="Editar", command=lambda: [callback_editar(), master.destroy()])
+        self.btn_editar.grid(row=3, column=1, columnspan=2, pady=10)  
 
 class FormularioEliminarMateria:
 
@@ -1231,7 +1226,7 @@ class VentanaGestionMaterias:
 
     def mostrar_form_editar_materia(self):
         ventana_form_editar_materias = tk.Toplevel(self.master)
-        self.form_editar_materias = FormularioActualizarMateria(ventana_form_editar_materias, self.editar_materias)
+        self.form_editar_materias = FormularioActualizarMateria(ventana_form_editar_materias, self.editar_materia)
         ventana_form_editar_materias.wait_window(ventana_form_editar_materias)
 
 
@@ -1243,15 +1238,14 @@ class VentanaGestionMaterias:
     def agregar_materia(self):
         if self.form_agregar_materia:
             # Get
-            id_materia =self.form_agregar_materia.entry_id_materia.get()
+            id_materia = self.form_agregar_materia.entry_id_materia.get()
             nombre = self.form_agregar_materia.entry_nombre.get()
             descripcion = self.form_agregar_materia.entry_descripcion.get()
 
-            # No null
             if not id_materia or not nombre or not descripcion:
                 messagebox.showwarning("Por favor, complete todos los campos.")
                 return
-            
+ 
             #Revisar Id materia
             if materiasColeccion.find_one({"id_materia": id_materia}):
                 messagebox.showwarning(
@@ -1266,49 +1260,51 @@ class VentanaGestionMaterias:
             }
 
             try:
-                materiasColeccion.insert_one(id_materia) 
+                materiasColeccion.insert_one(estudiante) 
                 print("Materia added successfully!")
                 messagebox.showinfo("Éxito", "Se ingresó correctamente.")
-
 
                 #Cerrar ventana gestión
                 self.master.destroy() 
 
                 if self.form_agregar_materia.master.winfo_exists():
                     self.form_agregar_materia.master.destroy()
-
             except Exception as e:
                 print(f"Error adding materia: {e}")
                 messagebox.showerror("Error", f"Error adding materia: {e}")
                 return
 
     def editar_materia(self):
-        if self.form_editar:
-            # Get
-            id_materia = self.form_editar_materia.entry_id_materia.get()
-            nombre = self.form_editar_materia.entry_nombre.get()
-            descripcion = self.form_editar_materia.entry_descripcion.get()
+        if self.form_editar_materias:
+            # Get the data from the form
+            id_materia = self.form_editar_materias.entry_id_materia.get()
+            nombre = self.form_editar_materias.entry_nombre.get()
+            descripcion = self.form_editar_materias.entry_descripcion.get()
 
-            # No null
             if not id_materia or not nombre or not descripcion:
-                messagebox.showwarning("Por favor, complete todos los campos.")
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
                 return
 
-            # If no existe
+            # IF NOT EXISTS
             if not materiasColeccion.find_one({"id_materia": id_materia}):
-                messagebox.showwarning("El ID del anuncio '{id_materia}' no existe.")
-            else:
-                materiasColeccion.update_one({"id_materia": id_materia}, {"$set": {"nombre": nombre, "descripcion": descripcion}})
-                messagebox.showinfo("Se modificó correctamente la materia.")
+                messagebox.showwarning("Advertencia", f"La materia '{id_materia}' no existe.")
+                return
 
-                #Cerrar ventana gestión
-                self.master.destroy() 
+            materiasColeccion.update_one(
+                {"id_materia": id_materia},
+                {"$set": {"nombre": nombre, "descripcion": descripcion}},
+            )
 
-                if self.form_editar_materia.master.winfo_exists():
-                    self.form_editar_materia.master.destroy()
+            messagebox.showinfo("Éxito", "Se modificó correctamente a la materia.")
+
+            # Cerrar ventana gestión
+            self.master.destroy()
+
+            if self.form_editar_estudiante.master.winfo_exists():
+                self.form_editar_estudiante.master.destroy()
 
     def eliminar_materia(self, id_materia):
-        if self.form_eliminar:
+        if self.form_eliminar_materia:
         # No null
             if not id_materia:
                 messagebox.showwarning("Por favor, ingresa el ID de la materia.")
@@ -1316,21 +1312,23 @@ class VentanaGestionMaterias:
                 self.master.lift()
                 return
 
-        # If no existe
-        materia = materiasColeccion.find_one({"id_materia": id_materia})
-        if not materia:
-            messagebox.showwarning(f"No se encontró la materia con el ID '{id_materia}'.")
-            self.master.deiconify() 
-            self.master.lift() 
-        else:
-            materiasColeccion.delete_one({"id_materia": id_materia})
-            messagebox.showinfo(f"Se eliminó correctamente la materia con el ID '{id_materia}'.")
+        try:
+            result = materiasColeccion.delete_one({"id_materia": id_materia})
+            print(result)
+            # If no existe
+            if result.deleted_count > 0:
+                messagebox.showinfo(f"Se eliminó correctamente la materia con el ID '{id_materia}'.")
+            else:
+                messagebox.showwarning(f"No se encontró la materia con el ID '{id_materia}'.")
+        except Exception as e:
+            print(f"Error deleting materia: {e}")
+            messagebox.showerror(f"Error eliminando materia: {e}")
 
-            #Cerrar ventana gestión
-            self.master.destroy() 
+        #Cerrar ventana gestión
+        self.master.destroy() 
 
-            if self.form_eliminar.master.winfo_exists():
-                self.form_eliminar.master.destroy()
+        if self.form_eliminar_materia.master.winfo_exists():
+            self.form_eliminar_materia.master.destroy()
  
 # ---------------------------------------FORMULARIOS GRUPOS--------------------------------------- #
 class FormularioAgregarGrupo:
@@ -1339,7 +1337,7 @@ class FormularioAgregarGrupo:
         self.master = master
         self.master.title("Agregar nuevo Grupo")
 
-        window_width = 300 
+        window_width = 400 
         window_height = 200
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
@@ -1347,9 +1345,6 @@ class FormularioAgregarGrupo:
         y_pos = (screen_height - window_height) // 2
 
         self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
-
-        self.master.grid_columnconfigure(0, weight=1)
-        self.master.grid_columnconfigure(1, weight=1)
 
         self.label_id_grupo = ttk.Label(master, text="ID Grupo:")
         self.label_id_grupo.grid(row=0, column=0, padx=10, pady=10, sticky="w")
@@ -1368,10 +1363,6 @@ class FormularioAgregarGrupo:
 
         self.entry_cantidad = ttk.Entry(master)
         self.entry_cantidad.grid(row=2, column=1, padx=10, pady=10)
-
-        self.button_frame = ttk.Frame(master)
-        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
-        self.button_frame.grid_columnconfigure(0, weight=1)
 
         self.btn_agregar = ttk.Button(self.button_frame, text="Agregar grupo", command=lambda: [callback_agregar(), master.destroy()])
         self.btn_agregar.grid(row=0, column=0)
@@ -2034,7 +2025,6 @@ class InterfazGrafica:
         else:
             self.ventana_gestion_materias = tk.Toplevel(self.master)
             app_gestion_materias = VentanaGestionMaterias(self.ventana_gestion_materias, self)
-
 
      # ---------------------------------------VENTANA GESTION GRUPOS--------------------------------------- #
 
