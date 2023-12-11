@@ -1073,9 +1073,7 @@ class VentanaGestionEstudiantes:
             if self.form_eliminar_estudiante.master.winfo_exists():
                 self.form_eliminar_estudiante.master.destroy()
 
-
 # ---------------------------------------FORMULARIOS MATERIAS--------------------------------------- #
-
 class FormularioAgregarMateria:
 
     def __init__(self, master, callback_agregar_registro):
@@ -1110,7 +1108,6 @@ class FormularioAgregarMateria:
         self.btn_agregar_materia = ttk.Button(master, text="Agregar materia", command=lambda:
         [callback_agregar_registro(), master.destroy()])
         self.btn_agregar_materia.grid(row=5, column=0, columnspan=2, pady=10)
-
 
 class FormularioActualizarMateria:
 
@@ -1185,8 +1182,6 @@ class FormularioEliminarMateria:
         #Button Eliminar
         self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_cedula_Est.get()), master.destroy()])
         self.btn_eliminar.grid(row=1, column=1, columnspan=2, pady=10)
-
-
 
 class VentanaGestionMaterias:
     
@@ -1337,11 +1332,7 @@ class VentanaGestionMaterias:
             if self.form_eliminar.master.winfo_exists():
                 self.form_eliminar.master.destroy()
  
-
-
-
 # ---------------------------------------FORMULARIOS GRUPOS--------------------------------------- #
-
 class FormularioAgregarGrupo:
 
     def __init__(self, master, callback_agregar, callback_editar=None):
@@ -1610,7 +1601,301 @@ class VentanaGestionGrupo:
             if self.form_eliminar_grupo.master.winfo_exists():
                 self.form_eliminar_grupo.master.destroy()
 
+# ---------------------------------------FORMULARIOS PROFESORES--------------------------------------- #
+class FormularioAgregarProfesor:
 
+    def __init__(self, master, callback_agregar):
+        self.master = master
+        self.master.title("Agregar Profesor")
+
+        window_width = 380
+        window_height = 240
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        #Datos ComboBox
+        id_materias = self.get_id_materias()
+
+        # CEDULA_PROF
+        self.label_cedula_Prof = ttk.Label(master, text="Cédula del Profesor:")
+        self.label_cedula_Prof.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_cedula_Prof = ttk.Entry(master)
+        self.entry_cedula_Prof.grid(row=0, column=1, padx=10, pady=10)
+        # NOMBRE
+        self.label_nombre = ttk.Label(master, text="Nombre:")
+        self.label_nombre.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_nombre = ttk.Entry(master)
+        self.entry_nombre.grid(row=1, column=1, padx=10, pady=10)
+        # MATERIAS
+        self.label_id_materia = ttk.Label(master, text="ID Materia:")
+        self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        
+        self.combo_id_materia = ttk.Combobox(master, values=id_materias)
+        self.combo_id_materia.grid(row=2, column=1, padx=10, pady=10)
+        # CORREO
+        self.label_correo = ttk.Label(master, text="Correo Electrónico:")
+        self.label_correo.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_correo = ttk.Entry(master)
+        self.entry_correo.grid(row=3, column=1, padx=10, pady=10)
+
+        # Button Volver
+        self.btn_volver = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_volver.grid(row=4, column=0, columnspan=1, pady=10)
+
+        # Button Agregar
+        self.btn_agregar = ttk.Button(master, text="Agregar", command=lambda: [callback_agregar(), master.destroy()])
+        self.btn_agregar.grid(row=4, column=1, columnspan=2, pady=10)
+
+    def get_id_materias(self):
+        id_materias = materiasColeccion.distinct("id_materia")
+        return id_materias
+
+class FormularioEditarProfesor:
+
+    def __init__(self, master, callback_editar):
+        self.master = master
+        self.master.title("Editar Profesor")
+
+        window_width = 380
+        window_height = 240
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        #Datos ComboBox
+        id_materias = self.get_id_materias()
+
+        # CEDULA_PROF
+        self.label_cedula_Prof = ttk.Label(master, text="Cédula del Profesor:")
+        self.label_cedula_Prof.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_cedula_Prof = ttk.Entry(master)
+        self.entry_cedula_Prof.grid(row=0, column=1, padx=10, pady=10)
+
+        # NOMBRE
+        self.label_nombre = ttk.Label(master, text="Nombre:")
+        self.label_nombre.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_nombre = ttk.Entry(master)
+        self.entry_nombre.grid(row=1, column=1, padx=10, pady=10)
+
+        # MATERIAS
+        self.label_id_materia = ttk.Label(master, text="ID Materia:")
+        self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        
+        self.combo_id_materia = ttk.Combobox(master, values=id_materias)
+        self.combo_id_materia.grid(row=2, column=1, padx=10, pady=10)
+
+        # CORREO
+        self.label_correo = ttk.Label(master, text="Correo Electrónico:")
+        self.label_correo.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_correo = ttk.Entry(master)
+        self.entry_correo.grid(row=3, column=1, padx=10, pady=10)
+
+        # Button Volver
+        self.btn_volver = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_volver.grid(row=4, column=0, columnspan=1, pady=10)
+
+        # Button Editar
+        self.btn_editar = ttk.Button(master, text="Editar", command=lambda: [callback_editar(), master.destroy()])
+        self.btn_editar.grid(row=4, column=1, columnspan=2, pady=10)
+
+    def get_id_materias(self):
+        id_materias = materiasColeccion.distinct("id_materia")
+        return id_materias
+
+class FormularioEliminarProfesor:
+
+    def __init__(self, master, callback_eliminar):
+        self.master = master
+        self.master.title("Eliminar Profesor")
+
+        window_width = 370
+        window_height = 100
+        screen_width = master.winfo_screenwidth()
+        screen_height = master.winfo_screenheight()
+        x_pos = (screen_width - window_width) // 2
+        y_pos = (screen_height - window_height) // 2
+
+        self.master.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+        # CEDULA_PROF
+        self.label_cedula_Prof = ttk.Label(master, text="Cédula del Profesor:")
+        self.label_cedula_Prof.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.entry_cedula_Prof = ttk.Entry(master)
+        self.entry_cedula_Prof.grid(row=0, column=1, padx=10, pady=5)
+
+        # Button Volver
+        self.btn_volver = ttk.Button(master, text="Volver", command=lambda: [master.destroy()])
+        self.btn_volver.grid(row=1, column=0, columnspan=1, pady=10)
+
+        # Button Eliminar
+        self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_cedula_Prof.get()), master.destroy()])
+        self.btn_eliminar.grid(row=1, column=1, columnspan=2, pady=10)
+
+class VentanaGestionProfesores:
+
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Gestión de Profesores")
+        self.master.geometry("400x200")
+
+        width_screen = master.winfo_screenwidth()
+        height_screen = master.winfo_screenheight()
+
+        x_pos = (width_screen - 400) // 2
+        y_pos = (height_screen - 200) // 2
+        self.master.geometry(f"400x200+{x_pos}+{y_pos}")
+
+        self.label_titulo = tk.Label(master, text="Gestión de Profesores", font=("Arial", 16))
+        self.label_titulo.pack(pady=10)
+
+        # AGREGAR PROFESOR
+        self.btn_agregar_profesor = tk.Button(master, text="Agregar Profesor", command=self.mostrar_form_agregar_profesor)
+        self.btn_agregar_profesor.pack(pady=10)
+
+        # EDITAR PROFESOR
+        self.btn_editar_profesor = tk.Button(master, text="Editar Profesor", command=self.mostrar_form_editar_profesor)
+        self.btn_editar_profesor.pack(pady=10)
+
+        # ELIMINAR PROFESOR
+        self.btn_eliminar_profesor = tk.Button(master, text="Eliminar Profesor", command=self.mostrar_form_eliminar_profesor)
+        self.btn_eliminar_profesor.pack(pady=10)
+
+        self.form_agregar_profesor = None
+        self.form_editar_profesor = None
+        self.form_eliminar_profesor = None
+
+    def mostrar_form_agregar_profesor(self):
+        ventana_form_agregar_profesor = tk.Toplevel(self.master)
+        self.form_agregar_profesor = FormularioAgregarProfesor(
+            ventana_form_agregar_profesor, self.agregar_profesor)
+        ventana_form_agregar_profesor.wait_window(ventana_form_agregar_profesor)
+
+    def mostrar_form_editar_profesor(self):
+        ventana_form_editar_profesor = tk.Toplevel(self.master)
+        self.form_editar_profesor = FormularioEditarProfesor(
+            ventana_form_editar_profesor, self.editar_profesor)
+        ventana_form_editar_profesor.wait_window(ventana_form_editar_profesor)
+
+    def mostrar_form_eliminar_profesor(self):
+        ventana_form_eliminar_profesor = tk.Toplevel(self.master)
+        self.form_eliminar_profesor = FormularioEliminarProfesor(
+            ventana_form_eliminar_profesor, self.eliminar_profesor)
+
+    # AGREGAR PROFESOR
+    def agregar_profesor(self):
+        print("Adding professor...")
+        if self.form_agregar_profesor:
+            # Get datos form
+            cedula_Prof = self.form_agregar_profesor.entry_cedula_Prof.get()
+            nombre = self.form_agregar_profesor.entry_nombre.get()
+            id_materia = self.form_agregar_profesor.combo_id_materia.get()
+            correo = self.form_agregar_profesor.entry_correo.get()
+
+            # NOT NULL
+            if not cedula_Prof or not nombre or not id_materia or not correo:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                return
+
+            # Check cedula profesor
+            if profesoresColeccion.find_one({"cedula_Prof": cedula_Prof}):
+                messagebox.showwarning(
+                    "Advertencia", f"La cédula '{cedula_Prof}' ya existe. Por favor, elige otra."
+                )
+                return
+
+            profesor = {
+                "cedula_Prof": cedula_Prof,
+                "nombre": nombre,
+                "id_materia": id_materia,
+                "correo": correo,
+            }
+
+            try:
+                profesoresColeccion.insert_one(profesor)
+                print("Professor added successfully!")
+                messagebox.showinfo("Éxito", "Se ingresó correctamente al profesor.")
+
+                # Cerrar ventana gestión
+                self.master.destroy()
+
+                if self.form_agregar_profesor.master.winfo_exists():
+                    self.form_agregar_profesor.master.destroy()
+            except Exception as e:
+                print(f"Error adding professor: {e}")
+                messagebox.showerror("Error", f"Error adding professor: {e}")
+                return
+
+    # EDITAR PROFESOR
+    def editar_profesor(self):
+        if self.form_editar_profesor:
+            # Get datos form
+            cedula_Prof = self.form_editar_profesor.entry_cedula_Prof.get()
+            nombre = self.form_editar_profesor.entry_nombre.get()
+            id_materia = self.form_editar_profesor.combo_id_materia.get()
+            correo = self.form_editar_profesor.entry_correo.get()
+
+            # NOT NULL
+            if not cedula_Prof or not nombre or not id_materia or not correo:
+                messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
+                return
+
+            # Check if the professor exists
+            if not profesoresColeccion.find_one({"cedula_Prof": cedula_Prof}):
+                messagebox.showwarning("Advertencia", f"La cédula '{cedula_Prof}' no existe.")
+                return
+
+            profesoresColeccion.update_one(
+                {"cedula_Prof": cedula_Prof},
+                {"$set": {"nombre": nombre, "id_materia": id_materia, "correo": correo}},
+            )
+
+            messagebox.showinfo("Éxito", "Se modificó correctamente al profesor.")
+
+            # Cerrar ventana gestión
+            self.master.destroy()
+
+            if self.form_editar_estudiante.master.winfo_exists():
+                self.form_editar_estudiante.master.destroy()
+
+    # ELIMINAR PROFESOR
+    def eliminar_profesor(self, cedula_Prof):
+        if self.form_eliminar_profesor:
+            # Get datos form
+            cedula_Prof = self.form_eliminar_profesor.entry_cedula_Prof.get()
+
+            # NOT NULL
+            if not cedula_Prof:
+                messagebox.showwarning("Advertencia", "Por favor, ingresa la cédula del profesor.")
+                return
+
+            # IF NOT EXISTS
+            profesor = profesoresColeccion.find_one({"cedula_Prof": cedula_Prof})
+            if not profesor:
+                messagebox.showwarning("Advertencia", f"No se encontró la cédula '{cedula_Prof}'.")
+                return
+
+            profesoresColeccion.delete_one({"cedula_Prof": cedula_Prof})
+            messagebox.showinfo("Éxito", f"Se eliminó correctamente al profesor con la cédula '{cedula_Prof}'.")
+
+            # Cerrar ventana gestión
+            self.master.destroy()
+
+            if self.form_eliminar_profesor.master.winfo_exists():
+                self.form_eliminar_profesor.master.destroy()
 # ---------------------------------------INTERFAZ GRAFICA--------------------------------------- #
 class InterfazGrafica:
 
@@ -1632,6 +1917,10 @@ class InterfazGrafica:
         # Button Estudiantes
         self.btn_gestion_anuncios = tk.Button(master, text="Gestionar Estudiantes", command=self.abrir_ventana_gestion_estudiantes, background="blue")
         self.btn_gestion_anuncios.pack(pady=10)
+
+        # Button Profesores
+        self.btn_gestion_profesores = tk.Button(master, text="Gestionar Profesores", command=self.abrir_ventana_gestion_profesores, background="blue")
+        self.btn_gestion_profesores.pack(pady=10)
 
         # Show Anuncios
         self.btn_gestion_anuncios = tk.Button(self.frame_botones_gestion, text="Gestionar Anuncios", command=self.abrir_ventana_gestion_anuncios)
@@ -1722,9 +2011,15 @@ class InterfazGrafica:
             self.ventana_gestion_estudiantes = tk.Toplevel(self.master)
             app_gestion_estudiantes = VentanaGestionEstudiantes(self.ventana_gestion_estudiantes, self)
 
+    # ---------------------------------------VENTANA GESTION PROFESORES--------------------------------------- #
+    def abrir_ventana_gestion_profesores(self):
+        if hasattr(self, 'ventana_gestion_profesores') and self.ventana_gestion_profesores.winfo_exists():
+            self.ventana_gestion_profesores.lift()
+        else:
+            self.ventana_gestion_profesores = tk.Toplevel(self.master)
+            app_gestion_profesores = VentanaGestionProfesores(self.ventana_gestion_profesores)
 
     # ---------------------------------------VENTANA GESTION MATERIAS--------------------------------------- #
-
     def abrir_ventana_gestion_materias(self):
         if hasattr(self, 'ventana_gestion_materias') and self.ventana_gestion_materias.winfo_exists():
             self.ventana_gestion_materias.lift()
@@ -1741,7 +2036,6 @@ class InterfazGrafica:
         else:
             self.ventana_gestion_grupo = tk.Toplevel(self.master)
             app_gestion_grupos = VentanaGestionGrupo(self.ventana_gestion_grupo, self)
-
 
 # ---------------------------------------MAIN WINDOW--------------------------------------- #
 root = tk.Tk()
