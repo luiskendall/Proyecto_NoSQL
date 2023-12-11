@@ -1915,14 +1915,14 @@ class InterfazGrafica:
 
         # ---------------------------------------BOTONES DE GESTION--------------------------------------- #
         # Button Estudiantes
-        self.btn_gestion_anuncios = tk.Button(master, text="Gestionar Estudiantes", command=self.abrir_ventana_gestion_estudiantes, background="blue")
-        self.btn_gestion_anuncios.pack(pady=10)
+        self.btn_gestion_anuncios = tk.Button(master, text="Gestionar Estudiantes", command=self.abrir_ventana_gestion_estudiantes)
+        self.btn_gestion_anuncios.pack(pady=10, padx=10)
 
         # Button Profesores
-        self.btn_gestion_profesores = tk.Button(master, text="Gestionar Profesores", command=self.abrir_ventana_gestion_profesores, background="blue")
-        self.btn_gestion_profesores.pack(pady=10)
+        self.btn_gestion_profesores = tk.Button(master, text="Gestionar Profesores", command=self.abrir_ventana_gestion_profesores)
+        self.btn_gestion_profesores.pack(pady=10, padx=10)
 
-        # Show Anuncios
+        # Button Anuncios
         self.btn_gestion_anuncios = tk.Button(self.frame_botones_gestion, text="Gestionar Anuncios", command=self.abrir_ventana_gestion_anuncios)
         self.btn_gestion_anuncios.pack(side=tk.LEFT, padx=5)
 
