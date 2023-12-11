@@ -1462,7 +1462,7 @@ class FormularioEliminarGrupo:
         self.btn_eliminar.grid(row=0, column=0)
         self.btn_eliminar.config(width=15)
 
-class VentanaGestionGrupos:
+class VentanaGestionGrupo:
     
     def __init__(self, master, interfaz_grafica):
         self.master = master
