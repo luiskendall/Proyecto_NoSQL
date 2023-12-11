@@ -296,7 +296,6 @@ class VentanaGestionAnuncios:
 
             self.interfaz_grafica.cargar_anuncios()
 
-
 # ---------------------------------------FORMULARIOS ASISTENCIA--------------------------------------- #
 class FormularioAgregarAsistencia:
 
@@ -1080,8 +1079,8 @@ class FormularioAgregarMateria:
         self.master = master
         self.master.title("Agregar nueva materia")
 
-        window_width = 340 
-        window_height = 300
+        window_width = 380 
+        window_height = 200
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
         x_pos = (screen_width - window_width) // 2
@@ -1091,17 +1090,19 @@ class FormularioAgregarMateria:
 
         self.label_nombre = ttk.Label(master, text="Nombre de la materia:")
         self.label_nombre.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        
         self.entry_nombre = ttk.Entry(master)
         self.entry_nombre.grid(row=0, column=1, padx=10, pady=10)
 
         self.label_descripcion = ttk.Label(master, text="Descripcion de la materia:")
         self.label_descripcion.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        
         self.entry_descripcion = ttk.Entry(master)
         self.entry_descripcion.grid(row=0, column=1, padx=10, pady=10)
 
-
         self.label_id_materia = ttk.Label(master, text="ID Materia:")
         self.label_id_materia.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        
         self.entry_id_materia = ttk.Entry(master)
         self.entry_id_materia.grid(row=0, column=1, padx=10, pady=10)
 
@@ -1111,9 +1112,9 @@ class FormularioAgregarMateria:
 
 class FormularioActualizarMateria:
 
-    def __init__(self, master, descripcion, nombre, id_materia, callback_editar):
+    def __init__(self, master, descripcion, id_materia, callback_editar):
         self.master = master
-        self.master.title("Editar Registro de Asistencia")
+        self.master.title("Editar Materia")
     
         window_width = 340
         window_height = 350
@@ -1180,7 +1181,7 @@ class FormularioEliminarMateria:
         self.btn_agregar.grid(row=1, column=0, columnspan=1, pady=10)
 
         #Button Eliminar
-        self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_cedula_Est.get()), master.destroy()])
+        self.btn_eliminar = ttk.Button(master, text="Eliminar", command=lambda: [callback_eliminar(self.entry_id_materia.get()), master.destroy()])
         self.btn_eliminar.grid(row=1, column=1, columnspan=2, pady=10)
 
 class VentanaGestionMaterias:
@@ -1305,7 +1306,6 @@ class VentanaGestionMaterias:
 
                 if self.form_editar_materia.master.winfo_exists():
                     self.form_editar_materia.master.destroy()
-
 
     def eliminar_materia(self, id_materia):
         if self.form_eliminar:
@@ -1921,6 +1921,14 @@ class InterfazGrafica:
         # Button Profesores
         self.btn_gestion_profesores = tk.Button(master, text="Gestionar Profesores", command=self.abrir_ventana_gestion_profesores)
         self.btn_gestion_profesores.pack(pady=10, padx=10)
+
+        # Button Materias
+        self.btn_gestion_materias = tk.Button(master, text="Gestionar Materias", command=self.abrir_ventana_gestion_materias)
+        self.btn_gestion_materias.pack(pady=10, padx=10)
+
+        # Button Grupos
+        self.btn_gestion_grupos = tk.Button(master, text="Gestionar Grupos", command=self.abrir_ventana_gestion_grupo)
+        self.btn_gestion_grupos.pack(pady=10, padx=10)
 
         # Button Anuncios
         self.btn_gestion_anuncios = tk.Button(self.frame_botones_gestion, text="Gestionar Anuncios", command=self.abrir_ventana_gestion_anuncios)
