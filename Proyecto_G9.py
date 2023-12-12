@@ -1333,11 +1333,11 @@ class VentanaGestionMaterias:
 # ---------------------------------------FORMULARIOS GRUPOS--------------------------------------- #
 class FormularioAgregarGrupo:
 
-    def __init__(self, master, callback_agregar, callback_editar=None):
+    def __init__(self, master, callback_agregar):
         self.master = master
         self.master.title("Agregar nuevo Grupo")
 
-        window_width = 400 
+        window_width = 350 
         window_height = 200
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
@@ -1364,9 +1364,8 @@ class FormularioAgregarGrupo:
         self.entry_cantidad = ttk.Entry(master)
         self.entry_cantidad.grid(row=2, column=1, padx=10, pady=10)
 
-        self.btn_agregar = ttk.Button(self.button_frame, text="Agregar grupo", command=lambda: [callback_agregar(), master.destroy()])
-        self.btn_agregar.grid(row=0, column=0)
-        self.btn_agregar.config(width=15)
+        self.btn_agregar_grupo = ttk.Button(master, text="Agregar grupo", command=lambda: [callback_agregar(), master.destroy()])
+        self.btn_agregar_grupo.grid(row=3, column=0, columnspan=2, pady=10)
 
 class FormularioActualizarGrupo:
 
@@ -1374,7 +1373,7 @@ class FormularioActualizarGrupo:
         self.master = master
         self.master.title("Actualizar Grupo")
 
-        window_width = 300
+        window_width = 380
         window_height = 200
         screen_width = master.winfo_screenwidth()
         screen_height = master.winfo_screenheight()
@@ -1386,7 +1385,7 @@ class FormularioActualizarGrupo:
         self.master.grid_columnconfigure(0, weight=1)
         self.master.grid_columnconfigure(1, weight=1)
 
-        self.label_id_grupo = ttk.Label(master, text="ID Geupo:")
+        self.label_id_grupo = ttk.Label(master, text="ID Grupo:")
         self.label_id_grupo.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
         self.entry_id_grupo = ttk.Entry(master)
@@ -1404,13 +1403,8 @@ class FormularioActualizarGrupo:
         self.entry_cantidad = ttk.Entry(master)
         self.entry_cantidad.grid(row=2, column=1, padx=10, pady=10)
 
-        self.button_frame = ttk.Frame(master)
-        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
-        self.button_frame.grid_columnconfigure(0, weight=1)
-
-        self.btn_editar = ttk.Button(self.button_frame, text="Actualizar", command=lambda: [callback_editar(), master.destroy()])
-        self.btn_editar.grid(row=0, column=0)
-        self.btn_editar.config(width=15)
+        self.btn_editar_grupo = ttk.Button(self.button_frame, text="Actualizar", command=lambda: [callback_editar(), master.destroy()])
+        self.btn_editar_grupo.grid(row=3, column=1, columnspan=2, pady=10)
 
 class FormularioEliminarGrupo:
 
@@ -1436,13 +1430,8 @@ class FormularioEliminarGrupo:
         self.entry_id_grupo = ttk.Entry(master)
         self.entry_id_grupo.grid(row=0, column=1, padx=10, pady=10)
 
-        self.button_frame = ttk.Frame(master)
-        self.button_frame.grid(row=5, column=0, columnspan=2, pady=10)
-        self.button_frame.grid_columnconfigure(0, weight=1)
-
-        self.btn_eliminar = ttk.Button(self.button_frame, text="Eliminar Grupo", command=lambda: [callback_eliminar(self.entry_id_grupo.get()), master.destroy()])
-        self.btn_eliminar.grid(row=0, column=0)
-        self.btn_eliminar.config(width=15)
+        self.btn_editar_materia = ttk.Button(self.button_frame, text="Eliminar", command=lambda: [callback_eliminar(), master.destroy()])
+        self.btn_editar_materia.grid(row=2, column=0, columnspan=2, pady=10)
 
 class VentanaGestionGrupo:
     
@@ -1482,8 +1471,7 @@ class VentanaGestionGrupo:
 
     def mostrar_form_agregar_grupo(self):
         ventana_form_agregar_grupo = tk.Toplevel(self.master)
-        self.form_agregar_grupo = FormularioAgregarGrupo(
-        ventana_form_agregar_grupo, self.agregar_estudiante)
+        self.form_agregar_grupo = FormularioAgregarGrupo(ventana_form_agregar_grupo, self.editar_grupo)
         ventana_form_agregar_grupo.wait_window(ventana_form_agregar_grupo)
 
     def mostrar_form_editar_grupo(self):
@@ -1495,7 +1483,7 @@ class VentanaGestionGrupo:
         ventana_form_eliminar_grupo = tk.Toplevel(self.master)
         self.form_eliminar_grupo = FormularioEliminarGrupo(ventana_form_eliminar_grupo, self.eliminar_grupo)
 
-    #AGREGAR GRUPO
+    # AGREGAR GRUPO
     def agregar_grupo(self):
         print("Adding group...")
         if self.form_agregar_grupo:
@@ -1512,8 +1500,7 @@ class VentanaGestionGrupo:
             # Check id
             if gruposColeccion.find_one({"id_grupo": id_grupo}):
                 messagebox.showwarning(
-                    "Advertencia", f"El id '{id_grupo}' ya existe. Por favor, elige otra."
-                )
+                    "Advertencia", f"El id '{id_grupo}' ya existe. Por favor, elige otro.")
                 return
 
             grupo = {
@@ -1526,15 +1513,14 @@ class VentanaGestionGrupo:
                 gruposColeccion.insert_one(grupo)
                 print("Group added successfully!")
                 messagebox.showinfo("Éxito", "Se ingresó correctamente.")
+                #Cerrar ventana gestión
+                self.master.destroy() 
 
-                # Cerrar ventana gestión
-                self.master.destroy()
-
-                if self.form_agregar_grupo.master.winfo_exists():
-                    self.form_agregar_grupo.master.destroy()
+                if self.form_agregar_materia.master.winfo_exists():
+                    self.form_agregar_materia.master.destroy()
             except Exception as e:
-                print(f"Error adding group: {e}")
-                messagebox.showerror("Error", f"Error adding group: {e}")
+                print(f"Error adding materia: {e}")
+                messagebox.showerror("Error", f"Error adding materia: {e}")
                 return
 
     #EDITAR GRUPO
